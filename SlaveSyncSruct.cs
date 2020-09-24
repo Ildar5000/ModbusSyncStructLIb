@@ -1,5 +1,6 @@
 ﻿using Modbus.Data;
 using Modbus.Device;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.IO.Ports;
@@ -45,19 +46,28 @@ namespace ModbusSyncStructLIb
 
         public void Open()
         {
-            serialPort.Open();
+            try
+            {
+                serialPort.Open();
 
-            slave = ModbusSerialSlave.CreateRtu(slaveID, serialPort);
+                slave = ModbusSerialSlave.CreateRtu(slaveID, serialPort);
 
 
-            slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
-            slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
+                slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
+                slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
 
-            slave.DataStore.HoldingRegisters[1] = 222;
-            slave.DataStore.HoldingRegisters[2] = 333;
+                slave.DataStore.HoldingRegisters[1] = 222;
+                slave.DataStore.HoldingRegisters[2] = 333;
 
-            slave.DataStore.HoldingRegisters[3] = 433;
-            slave.Listen();
+                slave.DataStore.HoldingRegisters[3] = 433;
+                slave.Listen();
+            }
+            catch(Exception ex)
+            {
+                Logger log = LogManager.GetLogger("ModbusSerialSlave");
+                LogLevel level = LogLevel.Trace;
+                log.Log(level, ex.Message);
+            }
 
         }
 
@@ -89,5 +99,6 @@ namespace ModbusSyncStructLIb
                     break;
             }
         }
+
     }
 }

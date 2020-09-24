@@ -6,17 +6,20 @@ using System.Threading.Tasks;
 using System.IO.Ports;
 using System.Security.Cryptography.X509Certificates;
 using Modbus.Device;
+using NLog;
 
 namespace ModbusSyncStructLIb
 {
     public class MasterSyncStruct
     {
         SerialPort serialPort;
-
+        byte slaveID;
+        PropertiesSetting propertiesSetting;
+        ModbusSerialMaster master;
 
         public MasterSyncStruct()
         {
-            PropertiesSetting propertiesSetting = new PropertiesSetting();
+            propertiesSetting = new PropertiesSetting();
 
             serialPort = new SerialPort(); //Create a new SerialPort object.
             serialPort.PortName = propertiesSetting.PortName;
@@ -32,15 +35,64 @@ namespace ModbusSyncStructLIb
         public void Open()
         {
             serialPort.Open();
-            ModbusSerialMaster master = ModbusSerialMaster.CreateRtu(serialPort);
+            master = ModbusSerialMaster.CreateRtu(serialPort);
             //ModbusIpMaster modbusIpMaster
 
-            byte slaveID = 1;
+            slaveID = 1;
             ushort startAddress = 0;
             ushort numOfPoints = 10;
             ushort[] holding_register = master.ReadHoldingRegisters(slaveID, startAddress,numOfPoints);
             
             Console.WriteLine(holding_register);
         }
+
+        //Одиночная пример одиночной отправка
+        public void send_single_message()
+        {
+            try
+            {
+                ushort coilAddress = 1;
+                ushort value = 10;
+                master.WriteSingleRegister(slaveID, coilAddress, value);
+            }
+            catch(Exception ex)
+            {
+                Logger log = LogManager.GetLogger("ModbusSerialMaster");
+                LogLevel level = LogLevel.Trace;
+                log.Log(level, ex.Message);
+            }
+        }
+
+        public void send_single_message(ushort value, ushort coilAddress)
+        {
+            try
+            {
+                //ushort coilAddress = 1;
+                //ushort value = value;
+                master.WriteSingleRegister(slaveID, coilAddress, value);
+            }
+            catch (Exception ex)
+            {
+                Logger log = LogManager.GetLogger("ModbusSerialMaster");
+                LogLevel level = LogLevel.Trace;
+                log.Log(level, ex.Message);
+            }
+        }
+
+        public void send_multi_message(ushort[] data)
+        {
+            ushort coilAddress = 1;
+            master.WriteMultipleRegisters(slaveID, coilAddress, data);
+        }
+
+        //Одиночная пример многопоточной отправка
+        public void send_multi_message()
+        {
+            ushort coilAddress = 1;
+            ushort[] data = { 10, 12, 12, 12, 334 };
+            master.WriteMultipleRegisters(slaveID, coilAddress, data);
+        }
+
+
     }
 }
