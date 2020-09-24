@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30503.244
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModbusSyncStructLIb", "ModbusSyncStructLIb.csproj", "{519C448F-EB2F-46F5-9C30-8F2F1CAD80CF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModbusTest", "..\ModbusTest\ModbusTest.csproj", "{3ECE7266-5DAB-4E9B-B98F-3CA013EDA723}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModbusSynchFormTest", "..\ModbusSynchFormTest\ModbusSynchFormTest.csproj", "{88E24B70-9518-4653-A402-A9C81CA39ABD}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{519C448F-EB2F-46F5-9C30-8F2F1CAD80CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{519C448F-EB2F-46F5-9C30-8F2F1CAD80CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{519C448F-EB2F-46F5-9C30-8F2F1CAD80CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{519C448F-EB2F-46F5-9C30-8F2F1CAD80CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3ECE7266-5DAB-4E9B-B98F-3CA013EDA723}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3ECE7266-5DAB-4E9B-B98F-3CA013EDA723}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3ECE7266-5DAB-4E9B-B98F-3CA013EDA723}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3ECE7266-5DAB-4E9B-B98F-3CA013EDA723}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88E24B70-9518-4653-A402-A9C81CA39ABD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88E24B70-9518-4653-A402-A9C81CA39ABD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88E24B70-9518-4653-A402-A9C81CA39ABD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88E24B70-9518-4653-A402-A9C81CA39ABD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {F8F0E19B-9F46-4688-8E98-7D4DC42B1BAA}
+	EndGlobalSection
+EndGlobal
