@@ -8,7 +8,13 @@ namespace ModbusSyncStructLIb
 {
     public class MetaClassForStructandtherdata
     {
+        public object struct_which_need_transfer;
+        string type_struct;
 
+        public MetaClassForStructandtherdata()
+        {
+
+        }
 
     }
 }

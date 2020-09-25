@@ -71,6 +71,12 @@ namespace ModbusSyncStructLIb
 
         }
 
+        public void close()
+        {
+            serialPort.Close();
+        }
+
+
         private void Modbus_DataStoreWriteTo(object sender, Modbus.Data.DataStoreEventArgs e)
         {
             switch (e.ModbusDataType)

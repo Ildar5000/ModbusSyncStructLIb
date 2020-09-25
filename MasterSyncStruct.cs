@@ -46,6 +46,22 @@ namespace ModbusSyncStructLIb
             Console.WriteLine(holding_register);
         }
 
+        public ushort[] readHolding()
+        {
+            slaveID = 1;
+            ushort startAddress = 0;
+            ushort numOfPoints = 10;
+
+            ushort[] holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+
+            return holding_register;
+        }
+
+        public void close()
+        {
+            serialPort.Close();
+        }
+
         //Одиночная пример одиночной отправка
         public void send_single_message()
         {
