@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Modbus.Extensions.Enron;
+
 
 namespace ModbusSyncStructLIb
 {
@@ -16,7 +18,8 @@ namespace ModbusSyncStructLIb
         SerialPort serialPort;
         ModbusSlave slave;
 
-
+        uint[] data = new uint[59];
+        byte[] data_byte = new byte[59];
         byte slaveID;
 
         public SlaveSyncSruct()
@@ -56,10 +59,22 @@ namespace ModbusSyncStructLIb
                 slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                 slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
 
+                
                 slave.DataStore.HoldingRegisters[1] = 222;
                 slave.DataStore.HoldingRegisters[2] = 333;
 
                 slave.DataStore.HoldingRegisters[3] = 433;
+
+                slave.DataStore.HoldingRegisters[100] = 433;
+
+
+
+                //for (int i=0;i<100;i++)
+                //{
+                //    slave.DataStore.HoldingRegisters[i] = 0;
+                //    Console.WriteLine(i);
+                //}
+
                 slave.Listen();
             }
             catch(Exception ex)
@@ -89,7 +104,16 @@ namespace ModbusSyncStructLIb
                         //slave.DataStore.HoldingRegisters[e.StartAddress + i + 1];
                         //e.StartAddress starts from 0
                         //You can set AO value to hardware here
+
+                        data[i] = e.Data.B[i];
+
                     }
+                    for (int i = 0; i < data.Length; i++)
+                    {
+                        data_byte = BitConverter.GetBytes(data[i]);
+                    }
+
+
                     break;
                 case ModbusDataType.Coil:
                     for (int i = 0; i < e.Data.A.Count; i++)

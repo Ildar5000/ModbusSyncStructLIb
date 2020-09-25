@@ -7,9 +7,12 @@ using System.IO.Ports;
 using System.Security.Cryptography.X509Certificates;
 using Modbus.Device;
 using NLog;
+using System.IO;
+using Modbus.Extensions.Enron;
 
 namespace ModbusSyncStructLIb
 {
+    [Serializable]
     public class MasterSyncStruct
     {
         SerialPort serialPort;
@@ -109,6 +112,32 @@ namespace ModbusSyncStructLIb
             master.WriteMultipleRegisters(slaveID, coilAddress, data);
         }
 
+        public void send_multi_message(MemoryStream stream)
+        {
+            ushort coilAddress = 1;
+            byte[] date = stream.ToArray();
+            ushort[] date_modbus=new ushort[date.Length];
+            ushort[] date_modbus2 = new ushort[50];
+            int count=0;
+            
+            try
+            {
+                date_modbus = Array.ConvertAll(date, (b) => (ushort)b);
 
+                for (int i=0;i<50;i++)
+                {
+                    date_modbus2[i] = date_modbus[i];
+                }
+                master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            
+            //master.WriteMultipleRegisters32(slaveID, coilAddress, date_modbus);
+
+
+        }
     }
 }
