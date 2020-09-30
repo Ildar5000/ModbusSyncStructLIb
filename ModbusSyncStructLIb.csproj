@@ -68,6 +68,7 @@
       <AutoGen>True</AutoGen>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>SettingMasterSlave.settings</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="SlaveSyncSruct.cs" />
   </ItemGroup>
@@ -75,8 +76,9 @@
     <None Include="app.config" />
     <None Include="packages.config" />
     <None Include="Properties\SettingMasterSlave.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
+      <Generator>PublicSettingsSingleFileGenerator</Generator>
       <LastGenOutput>SettingMasterSlave.Designer.cs</LastGenOutput>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>

@@ -10,5 +10,7 @@ namespace ModbusSyncStructLIb.DespriptionState
     {
         public byte StateSlaveRegisters = 0;
 
+        public byte SlaveId = 1;
+
     }
 }

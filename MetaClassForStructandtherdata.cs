@@ -21,6 +21,9 @@ namespace ModbusSyncStructLIb
         {
             struct_which_need_transfer = txt;
             type_struct = "string";
+
+
+            string writePath = @"C:\SomeDir\hta.txt";
         }
 
     }

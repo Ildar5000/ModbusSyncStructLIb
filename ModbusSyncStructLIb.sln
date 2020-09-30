@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ModbusTest", "..\ModbusTest
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModbusSynchFormTest", "..\ModbusSynchFormTest\ModbusSynchFormTest.csproj", "{88E24B70-9518-4653-A402-A9C81CA39ABD}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModbusSyncStruct", "..\ModbusSyncStruct\ModbusSyncStruct.csproj", "{0849AECA-E6A7-4213-A4E8-2A8E149C1868}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{88E24B70-9518-4653-A402-A9C81CA39ABD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{88E24B70-9518-4653-A402-A9C81CA39ABD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{88E24B70-9518-4653-A402-A9C81CA39ABD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0849AECA-E6A7-4213-A4E8-2A8E149C1868}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0849AECA-E6A7-4213-A4E8-2A8E149C1868}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0849AECA-E6A7-4213-A4E8-2A8E149C1868}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0849AECA-E6A7-4213-A4E8-2A8E149C1868}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
