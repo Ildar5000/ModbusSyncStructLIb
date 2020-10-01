@@ -47,6 +47,8 @@ namespace ModbusSyncStructLIb
         
         byte[] receivedpacket;
 
+        public MetaClassForStructandtherdata metaClass;
+
         public SlaveSyncSruct()
         {
             PropertiesSetting propertiesSetting = new PropertiesSetting();
@@ -185,7 +187,7 @@ namespace ModbusSyncStructLIb
                 {
                     Console.WriteLine("Получен серединный инфопакет:");
                     int delta_countreciveAndSend = countDataStruct - countrecivedcount;
-                    int delta_start_mid = countrecivedcount/2;
+                    int delta_start_mid = countrecivedcount - receivedpacket.Length;
                     for (int i = 0; i < receivedpacket.Length; i++)
                     {
                         data_byte_for_processing[delta_start_mid + i] = receivedpacket[i];
@@ -211,7 +213,7 @@ namespace ModbusSyncStructLIb
                 Stream stream = new MemoryStream(date);
                 BinaryFormatter formatter = new BinaryFormatter();
 
-                MetaClassForStructandtherdata metaClass = (MetaClassForStructandtherdata)formatter.Deserialize(stream);
+                metaClass = (MetaClassForStructandtherdata)formatter.Deserialize(stream);
 
                 Console.WriteLine("Cформирован");
             }
