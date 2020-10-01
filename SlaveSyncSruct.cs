@@ -12,6 +12,7 @@ using Modbus.Extensions.Enron;
 using ModbusSyncStructLIb.DespriptionState;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+using StructAllforTest;
 
 namespace ModbusSyncStructLIb
 {
@@ -133,31 +134,39 @@ namespace ModbusSyncStructLIb
             //перводим в массив байт
             Buffer.BlockCopy(date, 0, receivedpacket, 0, receivedpacket.Length);
 
-
-            //конечное число
-
-            countrecivedcount += date.Length;
+            countrecivedcount += receivedpacket.Length;
             Console.WriteLine("Получено:"+countDataStructUsshort);
-            if (countrecivedcount> countDataStructUsshort)
+            if (countrecivedcount> countDataStruct)
             {
-                Console.WriteLine("Получен конечный инфопакет:");
-                int delta_countreciveAndSend = Math.Abs(countrecivedcount - countDataStruct);
-                
-                for (int i = 0; i < delta_countreciveAndSend; i++)
+                try
                 {
-                    data_byte_for_processing[countrecivedcount + i] = receivedpacket[i];
-                }
+                    Console.WriteLine("Получен конечный инфопакет:");
+                    
 
-                Console.WriteLine("Получен конечный инфопакет:");
-                writebyte(data_byte_for_processing);
+                    int delta_start_mid = countrecivedcount - receivedpacket.Length;
+
+                    int delta_countreciveAndSend = Math.Abs(countDataStruct - delta_start_mid);
+                    for (int i = 0; i < delta_countreciveAndSend; i++)
+                    {
+                        data_byte_for_processing[delta_start_mid+i] = receivedpacket[i];
+                    }
+
+                    Console.WriteLine("Получен конечный инфопакет:");
+                    writebyte(data_byte_for_processing);
+
+                    countrecivedcount = 0;
+                    Сlass_Deserialization(data_byte_for_processing);
+                    //slave.DataStore.HoldingRegisters[0] = SlaveState.have_free_time;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
                 
-                countrecivedcount = 0;
-                Сlass_Deserialization(data_byte_for_processing);
-                //slave.DataStore.HoldingRegisters[0] = SlaveState.have_free_time;
             }
 
             // начало
-            if (countrecivedcount== count_send_packet)
+            if (countrecivedcount== receivedpacket.Length)
             {
                 Console.WriteLine("Получен первый инфопакет:");
                 for (int i = 0; i < receivedpacket.Length;i++)
@@ -165,22 +174,30 @@ namespace ModbusSyncStructLIb
                     data_byte_for_processing[i] = receivedpacket[i];
                 }
                 Console.WriteLine("Получен первый инфопакет:");
-                writebyte(data_byte_for_processing);
+                writebyte(receivedpacket);
 
 
                 //slave.DataStore.HoldingRegisters[0] = SlaveState.have_free_time;
             }
-            if (countrecivedcount > countDataStructUsshort && countrecivedcount<= countDataStructUsshort)
+            if (countrecivedcount > receivedpacket.Length && countrecivedcount< countDataStruct)
             {
-                Console.WriteLine("Получен серединный инфопакет:");
-                int delta_countreciveAndSend = countDataStruct- countrecivedcount;
-
-                for (int i = 0; i < receivedpacket.Length; i++)
+                try
                 {
-                    data_byte_for_processing[countrecivedcount + i] = receivedpacket[i];
+                    Console.WriteLine("Получен серединный инфопакет:");
+                    int delta_countreciveAndSend = countDataStruct - countrecivedcount;
+                    int delta_start_mid = countrecivedcount/2;
+                    for (int i = 0; i < receivedpacket.Length; i++)
+                    {
+                        data_byte_for_processing[delta_start_mid + i] = receivedpacket[i];
+                    }
+                    Console.WriteLine("Получен серединный инфопакет:");
+                    writebyte(receivedpacket);
                 }
-                Console.WriteLine("Получен серединный инфопакет:");
-                writebyte(data_byte_for_processing);
+                catch(Exception ex)
+                {
+                    Console.WriteLine(ex);
+                }
+                
             }
             
             Console.WriteLine("Переданно "+countrecivedcount);
@@ -188,13 +205,21 @@ namespace ModbusSyncStructLIb
 
         private void Сlass_Deserialization(byte[] date)
         {
-            Console.WriteLine("Формирование класса:");
-            Stream stream = new MemoryStream(date);
-            BinaryFormatter formatter = new BinaryFormatter();
+            try
+            {
+                Console.WriteLine("Формирование класса:");
+                Stream stream = new MemoryStream(date);
+                BinaryFormatter formatter = new BinaryFormatter();
 
-            MetaClassForStructandtherdata metaClass = (MetaClassForStructandtherdata)formatter.Deserialize(stream);
+                MetaClassForStructandtherdata metaClass = (MetaClassForStructandtherdata)formatter.Deserialize(stream);
 
-            Console.WriteLine("Cформарован");
+                Console.WriteLine("Cформирован");
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            
 
         }
 

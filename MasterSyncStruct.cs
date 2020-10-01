@@ -204,20 +204,20 @@ namespace ModbusSyncStructLIb
             ushort[] sentpacket = new ushort[count_send_packet];
 
             write_console(date);
-
+            Console.WriteLine("");
             //конвертирует в ushort
             Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);
 
             status_slave = SendRequestforStatusSlave();
 
             write_console(date_modbus);
-
+            Console.WriteLine("");
             byte[] date_unpack = new byte[date.Length];
 
             Buffer.BlockCopy(date_modbus, 0, date_unpack, 0, date.Length);
-
+            Console.WriteLine("");
             write_console(date_unpack);
-
+            Console.WriteLine("");
             try
             {
                 //есть свободное время у slave
@@ -276,7 +276,7 @@ namespace ModbusSyncStructLIb
                                 //если slave свободен то отправляем
                                 master.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
                                 Console.WriteLine("Отправлено");
-                                Thread.Sleep(1000);
+                                Thread.Sleep(3000);
                             }
                             else
                             {
