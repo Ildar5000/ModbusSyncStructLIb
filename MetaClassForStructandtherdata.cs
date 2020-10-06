@@ -9,21 +9,27 @@ namespace ModbusSyncStructLIb
     [Serializable]
     public class MetaClassForStructandtherdata
     {
-        object struct_which_need_transfer { get; set; }
-        string type_struct { get; set; }
+        public object struct_which_need_transfer { get; set; }
+        public Type type { get; set; }
+        public DateTime dateTime { get; set; }
 
         public MetaClassForStructandtherdata(string txt)
         {
             struct_which_need_transfer = txt;
-            type_struct = "string";
+            type = txt.GetType();
+            dateTime = DateTime.Now;
         }
 
 
         public MetaClassForStructandtherdata(object txt)
         {
             struct_which_need_transfer = txt;
-            //type_struct = txt.;
+            type = txt.GetType();
+            dateTime = DateTime.Now;
         }
 
+        public MetaClassForStructandtherdata()
+        {
+        }
     }
 }

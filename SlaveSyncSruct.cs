@@ -18,15 +18,22 @@ namespace ModbusSyncStructLIb
 {
     public class SlaveSyncSruct
     {
-        SerialPort serialPort;
+        public SerialPort serialPort;
         ModbusSlave slave;
+
+        //События
+        #region События
+        public delegate void SignalFormedMetaClassMethod(object struct_which_need_transfer);
+        public event SignalFormedMetaClassMethod SignalFormedMetaClass;
+
+        #endregion
+
 
         /// <summary>
         /// Кол-во пакетов в одном запросе
         /// </summary>
         /// 
         int count_send_packet = 70;
-
         /// <summary>
         /// Кол-во которое нужно передать
         /// </summary>
@@ -39,20 +46,15 @@ namespace ModbusSyncStructLIb
         /// Кол-во переданного
         /// </summary>
         int countrecivedcount = 0;
-
         ushort[] receive_packet_data;
         byte[] data_byte_for_processing;
-
         byte slaveID;
-        
         byte[] receivedpacket;
-
         public MetaClassForStructandtherdata metaClass;
 
         public SlaveSyncSruct()
         {
             PropertiesSetting propertiesSetting = new PropertiesSetting();
-
             slaveID = 1;
             serialPort = new SerialPort(propertiesSetting.PortName);
             serialPort.PortName = propertiesSetting.PortName;
@@ -60,10 +62,11 @@ namespace ModbusSyncStructLIb
             serialPort.DataBits = propertiesSetting.DataBits;
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
-
             receivedpacket = new byte[count_send_packet*2];
             receive_packet_data = new ushort[count_send_packet];
             //data_byte= new byte[count_send_packet*2];
+
+            metaClass = new MetaClassForStructandtherdata();
         }
 
         public void Open()
@@ -72,14 +75,13 @@ namespace ModbusSyncStructLIb
             {
                 serialPort.Open();
                 slave = ModbusSerialSlave.CreateRtu(slaveID, serialPort);
-
+                
                 slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                 slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
 
                 slave.DataStore.HoldingRegisters[1] = 0;
-                slave.DataStore.HoldingRegisters[2] = 333;
 
-                slave.DataStore.HoldingRegisters[3] = 433;
+                Console.WriteLine(slave.DataStore.HoldingRegisters[1]);
 
                 //for (int i=0;i<100;i++)
                 //{
@@ -109,7 +111,6 @@ namespace ModbusSyncStructLIb
             //если данные больше 100, то это кол-ве байт
             if (date>70)
             {
-
                 countDataStruct = Convert.ToInt32(date);
                 Console.WriteLine("Получен объем данных в байт:"+ countDataStruct);
                 int dataushort = (countDataStruct / 2) + 1;
@@ -132,6 +133,7 @@ namespace ModbusSyncStructLIb
         //обработка статусов
         private void processing_infopaket(ushort[] date)
         {
+            Console.WriteLine("Обработка инфопакета Slave занят:");
             Console.WriteLine("Обработка инфопакета:");
             //перводим в массив байт
             Buffer.BlockCopy(date, 0, receivedpacket, 0, receivedpacket.Length);
@@ -143,10 +145,8 @@ namespace ModbusSyncStructLIb
                 try
                 {
                     Console.WriteLine("Получен конечный инфопакет:");
-                    
 
                     int delta_start_mid = countrecivedcount - receivedpacket.Length;
-
                     int delta_countreciveAndSend = Math.Abs(countDataStruct - delta_start_mid);
                     for (int i = 0; i < delta_countreciveAndSend; i++)
                     {
@@ -158,7 +158,6 @@ namespace ModbusSyncStructLIb
 
                     countrecivedcount = 0;
                     Сlass_Deserialization(data_byte_for_processing);
-                    //slave.DataStore.HoldingRegisters[0] = SlaveState.have_free_time;
                 }
                 catch (Exception ex)
                 {
@@ -178,8 +177,6 @@ namespace ModbusSyncStructLIb
                 Console.WriteLine("Получен первый инфопакет:");
                 writebyte(receivedpacket);
 
-
-                //slave.DataStore.HoldingRegisters[0] = SlaveState.have_free_time;
             }
             if (countrecivedcount > receivedpacket.Length && countrecivedcount< countDataStruct)
             {
@@ -201,7 +198,6 @@ namespace ModbusSyncStructLIb
                 }
                 
             }
-            
             Console.WriteLine("Переданно "+countrecivedcount);
         }
 
@@ -215,14 +211,15 @@ namespace ModbusSyncStructLIb
 
                 metaClass = (MetaClassForStructandtherdata)formatter.Deserialize(stream);
 
+                //После обработки статус меняется на свободный
+                SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);   // 2.Вызов события
+
                 Console.WriteLine("Cформирован");
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex);
             }
-            
-
         }
 
 
@@ -238,7 +235,6 @@ namespace ModbusSyncStructLIb
                         Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
                     }
 
-                    //slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
                     if (e.Data.B.Count > 1)
                     {
                         Console.WriteLine("Пришел пакет с данными:");

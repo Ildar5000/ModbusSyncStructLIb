@@ -21,6 +21,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>8.0</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
@@ -55,6 +57,8 @@
     <Compile Include="Class1.cs" />
     <Compile Include="DespriptionState\SlaveState.cs" />
     <Compile Include="DespriptionState\TableUsedforRegister.cs" />
+    <Compile Include="EvenBase\EventSubscriptionInterface.cs" />
+    <Compile Include="KeepInfoAboutOuterStruct.cs" />
     <Compile Include="MasterSyncStruct.cs" />
     <Compile Include="MetaClassForStructandtherdata.cs" />
     <Compile Include="PropertiesSetting.cs" />
@@ -92,6 +96,9 @@
       <Project>{16ccdd08-7631-4316-bb22-901c8dbd53a3}</Project>
       <Name>StructAllforTest</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="StructFolder\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

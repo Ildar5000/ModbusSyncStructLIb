@@ -40,11 +40,19 @@ namespace ModbusSyncStructLIb
 
         public MasterSyncStruct(string text)
         {
-            propertiesSetting = new PropertiesSetting();
-            serialPort = new SerialPort();
-            serialPort.PortName = text;
-            serialPort.BaudRate = propertiesSetting.BaudRate;
-            serialPort.DataBits = propertiesSetting.DataBits;
+            try
+            {
+                propertiesSetting = new PropertiesSetting();
+                serialPort = new SerialPort();
+                serialPort.PortName = text;
+                serialPort.BaudRate = propertiesSetting.BaudRate;
+                serialPort.DataBits = propertiesSetting.DataBits;
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+            
         }
 
         public void Open()
@@ -220,11 +228,12 @@ namespace ModbusSyncStructLIb
             Console.WriteLine("");
             try
             {
-                //есть свободное время у slave
+                status_slave = SendRequestforStatusSlave();
+                //есть свободное время у slave для отправки
                 if (status_slave == SlaveState.have_free_time)
                 {
                     Console.WriteLine("Статус свободен");
-                    // SendStatusforSlave(SlaveState.havetimetransfer);
+                    //SendStatusforSlave(SlaveState.havetimetransfer);
 
                     //Отправка кол-во байт
                     Sendpaketwithcountbytes(date.Length);
@@ -236,12 +245,41 @@ namespace ModbusSyncStructLIb
                         Console.WriteLine("Объем данных больше чем в пакете");
                         int countneedsend = (date_modbus.Length / count_send_packet) + 1;
                         int k = 0;
-                        Console.WriteLine("Будет отправлено "+ countneedsend +" пакетов");
+                        Console.WriteLine("Будет отправлено " + countneedsend + " пакетов");
                         //кол-во отправок
                         for (int i = 0; i < countneedsend; i++)
                         {
-                            //status_slave = SendRequestforStatusSlave();
-                            if (status_slave == SlaveState.have_free_time)
+                            int counter_reguest_status = 0;
+
+                            Console.WriteLine("Отправляем запрос о статусе");
+                            status_slave = SendRequestforStatusSlave();
+
+                            if (status_slave==SlaveState.havenot_time)
+                            {
+                                while (counter_reguest_status!=3)
+                                {
+                                    Console.WriteLine("Отправляем запрос о статусе, так как был занят на "+i+" попытке");
+                                    Thread.Sleep(1000);
+                                    status_slave = SendRequestforStatusSlave();
+                                    if (status_slave == SlaveState.have_free_time|| status_slave == SlaveState.havetimetransfer)
+                                    {
+                                        counter_reguest_status = 3;
+                                    }
+                                    else
+                                    {
+                                        counter_reguest_status++;
+                                    }
+                                    
+                                }
+                                //если нет свободного статуса в течение 3 попыток идет прекращение передачи
+                                if (status_slave == SlaveState.havenot_time)
+                                {
+                                    Console.WriteLine("Попытка передачи не удалось на "+i+"передаче");
+                                }
+
+                            }
+
+                            if (status_slave == SlaveState.have_free_time|| status_slave == SlaveState.havetimetransfer)
                             {
                                 //окончание передачи
                                 if (countneedsend-1  == i)
@@ -276,18 +314,15 @@ namespace ModbusSyncStructLIb
                                 //если slave свободен то отправляем
                                 master.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
                                 Console.WriteLine("Отправлено");
-                                Thread.Sleep(3000);
+                                Thread.Sleep(500);
                             }
                             else
                             {
-
+                                Console.WriteLine("Slave занят: Передача отменена");
+                                counter_reguest_status = 0;
                             }
                         }
-
-
                         //после завершение отправки отправить запрос на проверку
-
-                        //
                         SendStatusforSlave(SlaveState.have_free_time);
 
                     }
@@ -295,6 +330,10 @@ namespace ModbusSyncStructLIb
                     {
                         master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
                     }
+                }
+                else  //В случае если не получено данные
+                {
+                    Console.WriteLine("Пакет не может передаться, связи с тем, что Slave занят");
                 }
             }
             catch(Exception ex)
