@@ -11,6 +11,7 @@ using System.IO;
 using Modbus.Extensions.Enron;
 using ModbusSyncStructLIb.DespriptionState;
 using System.Threading;
+using NLog.Config;
 
 namespace ModbusSyncStructLIb
 {
@@ -20,12 +21,16 @@ namespace ModbusSyncStructLIb
         byte slaveID;
         PropertiesSetting propertiesSetting;
         ModbusSerialMaster master;
-        
+        private static Logger logger;
         ushort status_slave;
 
 
         public MasterSyncStruct()
         {
+            var loggerconf = new XmlLoggingConfiguration("NLog.config");
+            logger = LogManager.GetCurrentClassLogger();
+
+
             propertiesSetting = new PropertiesSetting();
 
             serialPort = new SerialPort(propertiesSetting.PortName); //Create a new SerialPort object.
@@ -40,6 +45,9 @@ namespace ModbusSyncStructLIb
 
         public MasterSyncStruct(string text)
         {
+            var loggerconf = new XmlLoggingConfiguration("NLog.config");
+            logger = LogManager.GetCurrentClassLogger();
+
             try
             {
                 propertiesSetting = new PropertiesSetting();
@@ -179,7 +187,8 @@ namespace ModbusSyncStructLIb
 
         public void write_console(byte[] date)
         {
-            Console.WriteLine("bytes:");
+            //Console.WriteLine("bytes:");
+            logger.Info("bytes:");
             for (int i=0;i<date.Length;i++)
             {
                 Console.Write(date[i]+"  ");
@@ -188,7 +197,8 @@ namespace ModbusSyncStructLIb
 
         public void write_console(ushort[] date)
         {
-            Console.WriteLine("ushort:");
+            //Console.WriteLine("ushort:");
+            logger.Info("ushort:");
             for (int i = 0; i < date.Length; i++)
             {
                 Console.Write(date[i] + "  ");
@@ -232,33 +242,48 @@ namespace ModbusSyncStructLIb
                 //есть свободное время у slave для отправки
                 if (status_slave == SlaveState.have_free_time)
                 {
-                    Console.WriteLine("Статус свободен");
+                    //Console.WriteLine("Статус свободен");
+                    logger.Info("Статус свободен:");
                     //SendStatusforSlave(SlaveState.havetimetransfer);
 
                     //Отправка кол-во байт
                     Sendpaketwithcountbytes(date.Length);
-                    Console.WriteLine("Отправляем метапкет с кол-вом данных байт"+ date.Length);
-                    Console.WriteLine("Отправляем метапкет с кол-вом данных ushort" + date_modbus.Length);
+
+                    logger.Info("Статус свободен:");
+                    logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
+                    logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
+
+                    //Console.WriteLine("Отправляем метапкет с кол-вом данных байт"+ date.Length);
+                    //Console.WriteLine("Отправляем метапкет с кол-вом данных ushort" + date_modbus.Length);
 
                     if (date_modbus.Length > count_send_packet)
                     {
-                        Console.WriteLine("Объем данных больше чем в пакете");
+                        //Console.WriteLine("Объем данных больше чем в пакете");
+                        logger.Info("Объем данных больше чем в пакете");
+
                         int countneedsend = (date_modbus.Length / count_send_packet) + 1;
                         int k = 0;
-                        Console.WriteLine("Будет отправлено " + countneedsend + " пакетов");
+                        //Console.WriteLine("Будет отправлено " + countneedsend + " пакетов");
+                        logger.Info("Будет отправлено " + countneedsend + " пакетов");
+
                         //кол-во отправок
                         for (int i = 0; i < countneedsend; i++)
                         {
                             int counter_reguest_status = 0;
 
-                            Console.WriteLine("Отправляем запрос о статусе");
+                            //lonsole.WriteLine("Отправляем запрос о статусе");
+                            logger.Info("Отправляем запрос о статусе");
+
                             status_slave = SendRequestforStatusSlave();
 
                             if (status_slave==SlaveState.havenot_time)
                             {
                                 while (counter_reguest_status!=3)
                                 {
-                                    Console.WriteLine("Отправляем запрос о статусе, так как был занят на "+i+" попытке");
+                                    //Console.WriteLine("Отправляем запрос о статусе, так как был занят на "+i+" попытке");
+                                    
+                                    logger.Info("Отправляем запрос о статусе, так как был занят на " + i + " попытке");
+                                    
                                     Thread.Sleep(1000);
                                     status_slave = SendRequestforStatusSlave();
                                     if (status_slave == SlaveState.have_free_time|| status_slave == SlaveState.havetimetransfer)
@@ -274,7 +299,8 @@ namespace ModbusSyncStructLIb
                                 //если нет свободного статуса в течение 3 попыток идет прекращение передачи
                                 if (status_slave == SlaveState.havenot_time)
                                 {
-                                    Console.WriteLine("Попытка передачи не удалось на "+i+"передаче");
+                                    //Console.WriteLine("Попытка передачи не удалось на "+i+"передаче");
+                                    logger.Warn("Отправляем запрос о статусе, так как был занят на " + i + " попытке");
                                 }
 
                             }
@@ -284,41 +310,50 @@ namespace ModbusSyncStructLIb
                                 //окончание передачи
                                 if (countneedsend-1  == i)
                                 {
-                                    Console.WriteLine("Отправка " + i + " пакета");
+                                    //Console.WriteLine("Отправка " + i + " пакета");
+                                    logger.Trace("Отправка " + i + " пакета");
                                     for (int j = i * count_send_packet; j < date_modbus.Length; j++)
                                     {
                                         sentpacket[k] = date_modbus[j];
                                         k++;
                                     }
-                                    Console.WriteLine("Отправка данных");
+                                    //Console.WriteLine("Отправка данных");
+                                    logger.Trace("Отправка данных");
                                     write_console(sentpacket);
                                     k=0;
-                                    Console.WriteLine("Отправка данных");
+                                    //Console.WriteLine("Отправка данных");
+                                    logger.Trace("Отправка данных");
                                 }
                                 else
                                 {
-                                    Console.WriteLine("Отправка " + i + " пакета");
+                                    //Console.WriteLine("Отправка " + i + " пакета");
+                                    logger.Trace("Отправка " + i + " пакета");
                                     for (int j = i * count_send_packet; j < (i + 1) * count_send_packet; j++)
                                     {
                                         sentpacket[k] = date_modbus[j];
                                         k++;
                                     }
-                                    Console.WriteLine("Отправка данных");
+                                    //Console.WriteLine("Отправка данных");
+                                    logger.Trace("Отправка данных");
                                     write_console(sentpacket);
                                     k = 0;
-                                    Console.WriteLine("Отправка данных");
+                                    //Console.WriteLine("Отправка данных");
+                                    logger.Trace("Отправка данных");
                                 }
 
                                 //status_slave = SendRequestforStatusSlave();
 
                                 //если slave свободен то отправляем
                                 master.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
-                                Console.WriteLine("Отправлено");
+                                //Console.WriteLine("Отправлено");
+                                
+                                logger.Trace("Отправлено");
                                 Thread.Sleep(500);
                             }
                             else
                             {
-                                Console.WriteLine("Slave занят: Передача отменена");
+                                //Console.WriteLine("Slave занят: Передача отменена");
+                                logger.Trace("Slave занят: Передача отменена");
                                 counter_reguest_status = 0;
                             }
                         }
@@ -333,12 +368,14 @@ namespace ModbusSyncStructLIb
                 }
                 else  //В случае если не получено данные
                 {
-                    Console.WriteLine("Пакет не может передаться, связи с тем, что Slave занят");
+                    //Console.WriteLine("Пакет не может передаться, связи с тем, что Slave занят");
+                    logger.Warn("Пакет не может передаться, связи с тем, что Slave занят");
                 }
             }
             catch(Exception ex)
             {
                 Console.WriteLine(ex);
+                logger.Error(ex);
             }
             
 
