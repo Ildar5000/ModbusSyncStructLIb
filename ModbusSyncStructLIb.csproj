@@ -55,7 +55,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="ControlCheck\Crc16.cs" />
     <Compile Include="DespriptionState\SlaveState.cs" />
+    <Compile Include="DespriptionState\StateCR.cs" />
     <Compile Include="DespriptionState\TableUsedforRegister.cs" />
     <Compile Include="EvenBase\EventSubscriptionInterface.cs" />
     <Compile Include="KeepInfoAboutOuterStruct.cs" />

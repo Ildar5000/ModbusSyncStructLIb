@@ -12,6 +12,7 @@ using Modbus.Extensions.Enron;
 using ModbusSyncStructLIb.DespriptionState;
 using System.Threading;
 using NLog.Config;
+using ModbusSyncStructLIb.ControlCheck;
 
 namespace ModbusSyncStructLIb
 {
@@ -23,7 +24,7 @@ namespace ModbusSyncStructLIb
         ModbusSerialMaster master;
         private static Logger logger;
         ushort status_slave;
-
+        Crc16 crc16;
 
         public MasterSyncStruct()
         {
@@ -58,6 +59,7 @@ namespace ModbusSyncStructLIb
             }
             catch(Exception ex)
             {
+                logger.Error(ex);
                 Console.WriteLine(ex);
             }
             
@@ -81,6 +83,7 @@ namespace ModbusSyncStructLIb
             }
             catch(Exception ex)
             {
+                logger.Error(ex);
                 Console.WriteLine(ex);
             }
             
@@ -102,58 +105,11 @@ namespace ModbusSyncStructLIb
             serialPort.Close();
         }
 
+        /// <summary>
+        /// отправка пакета о статусе
+        /// </summary>
+        /// <returns></returns>
 
-        #region Примеры
-        //Одиночная пример одиночной отправка
-        public void send_single_message()
-        {
-            try
-            {
-                ushort coilAddress = 10;
-                ushort value = 10;
-                master.WriteSingleRegister(slaveID, coilAddress, value);
-            }
-            catch(Exception ex)
-            {
-                Logger log = LogManager.GetLogger("ModbusSerialMaster");
-                LogLevel level = LogLevel.Trace;
-                log.Log(level, ex.Message);
-            }
-        }
-
-        public void send_single_message(ushort value, ushort coilAddress)
-        {
-            try
-            {
-                //ushort coilAddress = 1;
-                //ushort value = value;
-                master.WriteSingleRegister(slaveID, coilAddress, value);
-            }
-            catch (Exception ex)
-            {
-                Logger log = LogManager.GetLogger("ModbusSerialMaster");
-                LogLevel level = LogLevel.Trace;
-                log.Log(level, ex.Message);
-            }
-        }
-
-        public void send_multi_message(ushort[] data)
-        {
-            ushort coilAddress = 10;
-            master.WriteMultipleRegisters(slaveID, coilAddress, data);
-        }
-
-        //Одиночная пример многопоточной отправка
-        public void send_multi_message()
-        {
-            ushort coilAddress = 10;
-            ushort[] data = { 10, 12, 12, 12, 334 };
-            master.WriteMultipleRegisters(slaveID, coilAddress, data);
-        }
-
-        #endregion
-
-        //отправка пакета о статусе
         public ushort SendRequestforStatusSlave()
         {
             ushort startAddress = 0;
@@ -162,6 +118,20 @@ namespace ModbusSyncStructLIb
 
             return status_slave[0];
         }
+
+        /// <summary>
+        /// Получение значение других регистров
+        /// </summary>
+        /// <param name="startAddress"></param>
+        /// <returns></returns>
+        public ushort SendRequestforAnyStatusSlave(ushort startAddress)
+        {
+            ushort numOfPoints = 1;
+            ushort[] status_slave = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+
+            return status_slave[0];
+        }
+
 
         //отправка пакета с изменением статуса
         public void SendStatusforSlave(ushort status)
@@ -323,6 +293,23 @@ namespace ModbusSyncStructLIb
                                     k=0;
                                     //Console.WriteLine("Отправка данных");
                                     logger.Trace("Отправка данных");
+
+
+                                    Console.WriteLine("Контрольная сумма");
+
+                                    //Контрольная сумма
+                                    crc16 = new Crc16();
+                                    byte[] controlsum16 = crc16.ComputeChecksumBytes(date);
+                                    
+                                    for (int cr1=0; cr1 < controlsum16.Length; cr1++)
+                                    {
+                                        Console.WriteLine(controlsum16[cr1]);
+                                    }
+
+                                    //Отправка контрольной суммы
+                                    send_cr16_message(controlsum16);
+
+                                    Console.WriteLine("Cформирован");
                                 }
                                 else
                                 {
@@ -387,5 +374,107 @@ namespace ModbusSyncStructLIb
 
         }
 
+        /// <summary>
+        /// Отправка CR16
+        /// </summary>
+        /// <param name="date"></param>
+        public void send_cr16_message(byte[] date)
+        {
+            //Отправка данных
+            status_slave = SendRequestforStatusSlave();
+            
+
+            //Отправляем CR16
+            if (status_slave==SlaveState.havechecktotime)
+            {
+                logger.Info("Отправка контрольной суммы");
+
+                ushort sendCR16=crc16.convertoshort(date);
+
+                ushort coilAddress = 4;
+                send_single_message(sendCR16, coilAddress);
+
+                logger.Info("Ожидание ответа");
+                Thread.Sleep(100);
+
+                logger.Info("Отправка данных");
+                status_slave = SendRequestforAnyStatusSlave(5);
+
+
+            }
+
+        }
+
+        /// <summary>
+        /// Отправка данных
+        /// </summary>
+        /// <param name="date"></param>
+        /// <param name="coilAddress"></param>
+        public void send_single_message(ushort date,ushort coilAddress)
+        {
+            try
+            {
+                //регистр с контрольной суммой
+                ushort value = date;
+                master.WriteSingleRegister(slaveID, coilAddress, value);
+
+            }
+            catch(Exception ex)
+            {
+                logger.Error(ex);
+            }
+        }
+
+        /*
+        #region Примеры
+        //Одиночная пример одиночной отправка
+        public void send_single_message()
+        {
+            try
+            {
+                ushort coilAddress = 10;
+                ushort value = 10;
+                master.WriteSingleRegister(slaveID, coilAddress, value);
+            }
+            catch (Exception ex)
+            {
+                Logger log = LogManager.GetLogger("ModbusSerialMaster");
+                LogLevel level = LogLevel.Trace;
+                log.Log(level, ex.Message);
+            }
+        }
+
+        public void send_single_message(ushort value, ushort coilAddress)
+        {
+            try
+            {
+                //ushort coilAddress = 1;
+                //ushort value = value;
+                master.WriteSingleRegister(slaveID, coilAddress, value);
+            }
+            catch (Exception ex)
+            {
+                Logger log = LogManager.GetLogger("ModbusSerialMaster");
+                LogLevel level = LogLevel.Trace;
+                log.Log(level, ex.Message);
+            }
+        }
+
+        public void send_multi_message(ushort[] data)
+        {
+            ushort coilAddress = 10;
+            master.WriteMultipleRegisters(slaveID, coilAddress, data);
+        }
+
+        //Одиночная пример многопоточной отправка
+        public void send_multi_message()
+        {
+            ushort coilAddress = 10;
+            ushort[] data = { 10, 12, 12, 12, 334 };
+            master.WriteMultipleRegisters(slaveID, coilAddress, data);
+        }
+
+        #endregion
+        */
     }
 }

@@ -13,6 +13,8 @@ using ModbusSyncStructLIb.DespriptionState;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using StructAllforTest;
+using ModbusSyncStructLIb.ControlCheck;
+using NLog.Config;
 
 namespace ModbusSyncStructLIb
 {
@@ -21,13 +23,13 @@ namespace ModbusSyncStructLIb
         public SerialPort serialPort;
         ModbusSlave slave;
 
+        private static Logger logger;
         //События
         #region События
         public delegate void SignalFormedMetaClassMethod(object struct_which_need_transfer);
         public event SignalFormedMetaClassMethod SignalFormedMetaClass;
 
         #endregion
-
 
         /// <summary>
         /// Кол-во пакетов в одном запросе
@@ -52,8 +54,16 @@ namespace ModbusSyncStructLIb
         byte[] receivedpacket;
         public MetaClassForStructandtherdata metaClass;
 
+        /// <summary>
+        /// Контрольная сумма
+        /// </summary>
+        private ushort cr16;
+
         public SlaveSyncSruct()
         {
+            var loggerconf = new XmlLoggingConfiguration("NLog.config");
+            logger = LogManager.GetCurrentClassLogger();
+
             PropertiesSetting propertiesSetting = new PropertiesSetting();
             slaveID = 1;
             serialPort = new SerialPort(propertiesSetting.PortName);
@@ -94,7 +104,7 @@ namespace ModbusSyncStructLIb
             catch(Exception ex)
             {
                 Logger log = LogManager.GetLogger("ModbusSerialSlave");
-                LogLevel level = LogLevel.Trace;
+                LogLevel level = LogLevel.Error;
                 log.Log(level, ex.Message);
             }
 
@@ -118,11 +128,33 @@ namespace ModbusSyncStructLIb
                 data_byte_for_processing = new byte[countDataStruct];
                 countDataStructUsshort = (countDataStruct / 2) + 1;
             }
+
+            
+            // В случае если идет проверка системы
+            if (slave.DataStore.HoldingRegisters[1] == SlaveState.havechecktotime)
+            {
+                if (cr16== date)
+                {
+                    logger.Info("Сумма совпала");
+                    //Регистр с проверкой контрольной суммы
+                    slave.DataStore.HoldingRegisters[5] = StateCR.haveNotError;
+                    //Регистр со статусом
+                    slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+
+                }
+
+                //slave.WriteComplete();
+            }
         }
 
+        /// <summary>
+        /// Вывод в консоль
+        /// </summary>
+        /// <param name="date"></param>
         private void writebyte(byte[] date)
         {
             Console.WriteLine("Вывод пакета байт:");
+            
             for (int i=0;i<date.Length;i++)
             {
                 Console.Write(date[i]+" ");
@@ -130,7 +162,9 @@ namespace ModbusSyncStructLIb
             Console.WriteLine("");
         }
 
-        //обработка статусов
+        /// <summary>
+        /// обработка статусов
+        /// </summary>
         private void processing_infopaket(ushort[] date)
         {
             Console.WriteLine("Обработка инфопакета Slave занят:");
@@ -200,7 +234,10 @@ namespace ModbusSyncStructLIb
             }
             Console.WriteLine("Переданно "+countrecivedcount);
         }
-
+        
+        /// <summary>
+        /// Серелизация класса
+        /// </summary>
         private void Сlass_Deserialization(byte[] date)
         {
             try
@@ -214,6 +251,15 @@ namespace ModbusSyncStructLIb
                 //После обработки статус меняется на свободный
                 SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);   // 2.Вызов события
 
+
+                //Контрольная сумма
+                Crc16 crc16 = new Crc16();
+                byte[] crc16bytes = crc16.ComputeChecksumBytes(date);
+
+                cr16 = crc16.convertoshort(crc16bytes);
+
+                slave.DataStore.HoldingRegisters[1] = SlaveState.havechecktotime;
+
                 Console.WriteLine("Cформирован");
             }
             catch(Exception ex)
@@ -221,7 +267,6 @@ namespace ModbusSyncStructLIb
                 Console.WriteLine(ex);
             }
         }
-
 
         private void Modbus_DataStoreWriteTo(object sender, Modbus.Data.DataStoreEventArgs e)
         {
@@ -232,19 +277,22 @@ namespace ModbusSyncStructLIb
                     if (e.Data.B.Count == 1)
                     {
                         processing_singleregx(e.Data.B[0]);
-                        Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                        //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                        logger.Info("Пришла команда на обработку" + e.Data.B[0]);
                     }
 
                     if (e.Data.B.Count > 1)
                     {
-                        Console.WriteLine("Пришел пакет с данными:");
+                        //Console.WriteLine("Пришел пакет с данными:");
+                        logger.Info("Пришел пакет с данными:");
                         for (int i = 0; i < e.Data.B.Count; i++)
                         {
                             receive_packet_data[i] = e.Data.B[i];
                             Console.Write(receive_packet_data[i]+" ");
                         }
                         Console.WriteLine("");
-                        Console.WriteLine("Обработка пакета");
+                        //Console.WriteLine("Обработка пакета");
+                        logger.Info("Обработка пакета");
                         processing_infopaket(receive_packet_data);
                     }                  
 
