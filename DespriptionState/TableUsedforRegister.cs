@@ -27,12 +27,12 @@ namespace ModbusSyncStructLIb.DespriptionState
         /// <summary>
         /// Контрольная сумма
         /// </summary>
-        public const byte CR16 = 4;
+        public const ushort CR16 = 4;
 
         /// <summary>
         /// Контрольная сумма сделано
         /// </summary>
-        public const byte CR16_OK = 5;
+        public const ushort CR16_OK = 5;
 
     }
 }

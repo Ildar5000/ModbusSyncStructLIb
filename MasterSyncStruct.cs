@@ -106,7 +106,7 @@ namespace ModbusSyncStructLIb
         }
 
         /// <summary>
-        /// отправка пакета о статусе
+        /// чтение статусе у Slave
         /// </summary>
         /// <returns></returns>
 
@@ -133,7 +133,9 @@ namespace ModbusSyncStructLIb
         }
 
 
-        //отправка пакета с изменением статуса
+        /// <summary>
+        /// отправка пакета с изменением статуса
+        /// </summary>
         public void SendStatusforSlave(ushort status)
         {
             ushort startAddress = 0;
@@ -175,7 +177,10 @@ namespace ModbusSyncStructLIb
             }
         }
 
-        // отправка инфоданных
+        /// <summary>
+        /// отправка инфоданных
+        /// </summary>
+
         public void send_multi_message(MemoryStream stream)
         {
             ushort coilAddress = 10;
@@ -194,26 +199,34 @@ namespace ModbusSyncStructLIb
             write_console(date);
             Console.WriteLine("");
             //конвертирует в ushort
-            Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);
 
-            status_slave = SendRequestforStatusSlave();
+            logger.Info("Преобразование в ushort:Начато");
+            Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);
+            logger.Info("Преобразование в ushort:закончено");
+
 
             write_console(date_modbus);
-            Console.WriteLine("");
+
             byte[] date_unpack = new byte[date.Length];
 
+            /*
             Buffer.BlockCopy(date_modbus, 0, date_unpack, 0, date.Length);
             Console.WriteLine("");
             write_console(date_unpack);
             Console.WriteLine("");
+            */
+
             try
             {
+                logger.Info("Запрос о получении статуса");
                 status_slave = SendRequestforStatusSlave();
+                logger.Info("Cтатус Slave " + status_slave);
+
                 //есть свободное время у slave для отправки
                 if (status_slave == SlaveState.have_free_time)
                 {
-                    //Console.WriteLine("Статус свободен");
                     logger.Info("Статус свободен:");
+                    
                     //SendStatusforSlave(SlaveState.havetimetransfer);
 
                     //Отправка кол-во байт
@@ -294,8 +307,14 @@ namespace ModbusSyncStructLIb
                                     //Console.WriteLine("Отправка данных");
                                     logger.Trace("Отправка данных");
 
-
                                     Console.WriteLine("Контрольная сумма");
+
+                                    //если slave свободен то отправляем
+                                    master.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
+                                    //Console.WriteLine("Отправлено");
+
+                                    logger.Trace("Отправлено");
+                                    Thread.Sleep(500);
 
                                     //Контрольная сумма
                                     crc16 = new Crc16();
@@ -326,16 +345,17 @@ namespace ModbusSyncStructLIb
                                     k = 0;
                                     //Console.WriteLine("Отправка данных");
                                     logger.Trace("Отправка данных");
+
+                                    //если slave свободен то отправляем
+                                    master.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
+                                    //Console.WriteLine("Отправлено");
+
+                                    logger.Trace("Отправлено");
+                                    Thread.Sleep(500);
+
                                 }
 
                                 //status_slave = SendRequestforStatusSlave();
-
-                                //если slave свободен то отправляем
-                                master.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
-                                //Console.WriteLine("Отправлено");
-                                
-                                logger.Trace("Отправлено");
-                                Thread.Sleep(500);
                             }
                             else
                             {
@@ -345,11 +365,12 @@ namespace ModbusSyncStructLIb
                             }
                         }
                         //после завершение отправки отправить запрос на проверку
-                        SendStatusforSlave(SlaveState.have_free_time);
+                        //SendStatusforSlave(SlaveState.have_free_time);
 
                     }
                     else    //в случае если пакет меньше чем ограничения
                     {
+                        logger.Trace("Передача меньше чем, пакет");
                         master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
                     }
                 }
@@ -382,27 +403,20 @@ namespace ModbusSyncStructLIb
         {
             //Отправка данных
             status_slave = SendRequestforStatusSlave();
-            
+            logger.Info("Отправка контрольной суммы");
 
-            //Отправляем CR16
-            if (status_slave==SlaveState.havechecktotime)
-            {
-                logger.Info("Отправка контрольной суммы");
+            ushort sendCR16=crc16.convertoshort(date);
 
-                ushort sendCR16=crc16.convertoshort(date);
+            ushort coilAddress = TableUsedforRegisters.CR16;
 
-                ushort coilAddress = 4;
-                send_single_message(sendCR16, coilAddress);
+            send_single_message(sendCR16, coilAddress);
 
-                logger.Info("Ожидание ответа");
-                Thread.Sleep(100);
+            logger.Info("Ожидание ответа");
+            Thread.Sleep(100);
 
-                logger.Info("Отправка данных");
-                status_slave = SendRequestforAnyStatusSlave(5);
+            //logger.Info("Отправка данных");
 
-
-            }
-
+            //status_slave = SendRequestforAnyStatusSlave(5);
         }
 
         /// <summary>
