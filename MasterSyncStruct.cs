@@ -13,12 +13,15 @@ using ModbusSyncStructLIb.DespriptionState;
 using System.Threading;
 using NLog.Config;
 using ModbusSyncStructLIb.ControlCheck;
+using Modbus.Serial;
 
 namespace ModbusSyncStructLIb
 {
     public class MasterSyncStruct
     {
         SerialPort serialPort;
+        SerialPortAdapter SerialPortAdapter;
+
         byte slaveID;
         PropertiesSetting propertiesSetting;
         ModbusSerialMaster master;
@@ -71,7 +74,8 @@ namespace ModbusSyncStructLIb
             {
                 Console.WriteLine(propertiesSetting.PortName);
                 serialPort.Open();
-                master = ModbusSerialMaster.CreateRtu(serialPort);
+                SerialPortAdapter = new SerialPortAdapter(serialPort);
+                master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
                 //ModbusIpMaster modbusIpMaster
 
                 slaveID = 1;

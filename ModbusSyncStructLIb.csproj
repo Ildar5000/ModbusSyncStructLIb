@@ -36,9 +36,6 @@
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>packages\NLog.4.7.4\lib\net45\NLog.dll</HintPath>
     </Reference>
-    <Reference Include="NModbus4, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\NModbus4.2.1.0\lib\net40\NModbus4.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -94,6 +91,14 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\NModbus\NModbus4\NModbus4.Serial\NModbus4.Serial.csproj">
+      <Project>{55795b78-4555-4694-85c6-a7f657a27d65}</Project>
+      <Name>NModbus4.Serial</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NModbus\NModbus4\NModbus4\NModbus4.csproj">
+      <Project>{4db0072c-b952-4247-b36d-f9afd555511f}</Project>
+      <Name>NModbus4</Name>
+    </ProjectReference>
     <ProjectReference Include="..\StructAllforTest\StructAllforTest.csproj">
       <Project>{16ccdd08-7631-4316-bb22-901c8dbd53a3}</Project>
       <Name>StructAllforTest</Name>

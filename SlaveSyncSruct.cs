@@ -15,12 +15,15 @@ using System.IO;
 using StructAllforTest;
 using ModbusSyncStructLIb.ControlCheck;
 using NLog.Config;
+using Modbus.Serial;
 
 namespace ModbusSyncStructLIb
 {
     public class SlaveSyncSruct
     {
         public SerialPort serialPort;
+
+        public SerialPortAdapter SerialPortAdapter;
         ModbusSlave slave;
 
         private static Logger logger;
@@ -84,7 +87,8 @@ namespace ModbusSyncStructLIb
             try
             {
                 serialPort.Open();
-                slave = ModbusSerialSlave.CreateRtu(slaveID, serialPort);
+                SerialPortAdapter = new SerialPortAdapter(serialPort);
+                slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
 
                 logger.Info("Slave подключен");
                 
@@ -93,14 +97,14 @@ namespace ModbusSyncStructLIb
 
                 slave.DataStore.HoldingRegisters[1] = 0;
                 logger.Info("Slave состояние"+ slave.DataStore.HoldingRegisters[1]);
-                
+
                 //for (int i=0;i<100;i++)
                 //{
                 //    slave.DataStore.HoldingRegisters[i] = 0;
                 //    Console.WriteLine(i);
                 //}
 
-                slave.Listen();
+                var listenTask = slave.ListenAsync();
             }
             catch(Exception ex)
             {
