@@ -25,9 +25,14 @@ namespace ModbusSyncStructLIb
         byte slaveID;
         PropertiesSetting propertiesSetting;
         ModbusSerialMaster master;
+
+        ModbusIpMaster masterTCP;
+
         private static Logger logger;
         ushort status_slave;
         Crc16 crc16;
+
+        int TypeModbus=0;
 
         public MasterSyncStruct()
         {
@@ -59,6 +64,8 @@ namespace ModbusSyncStructLIb
                 serialPort.PortName = text;
                 serialPort.BaudRate = propertiesSetting.BaudRate;
                 serialPort.DataBits = propertiesSetting.DataBits;
+                TypeModbus = propertiesSetting.TypeComModbus;
+
             }
             catch(Exception ex)
             {
@@ -75,7 +82,17 @@ namespace ModbusSyncStructLIb
                 Console.WriteLine(propertiesSetting.PortName);
                 serialPort.Open();
                 SerialPortAdapter = new SerialPortAdapter(serialPort);
-                master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
+
+                if (TypeModbus==1)
+                {
+                    master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
+                }
+
+                if (TypeModbus == 2)
+                {
+                    master = ModbusSerialMaster.CreateAscii(SerialPortAdapter);
+                }
+
                 //ModbusIpMaster modbusIpMaster
 
                 slaveID = 1;

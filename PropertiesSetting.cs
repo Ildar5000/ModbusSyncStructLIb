@@ -16,6 +16,9 @@ namespace ModbusSyncStructLIb
         public int DataBits;
         public string Parity;
         public string StopBits;
+        public int TypeComModbus;
+
+
 
         public PropertiesSetting()
         {
@@ -25,8 +28,6 @@ namespace ModbusSyncStructLIb
             DataBits = Properties.SettingMasterSlave.Default.DataBits;
             
             //Parity= Properties.SettingMasterSlave.Default.Parity;
-            
-
         }
 
 

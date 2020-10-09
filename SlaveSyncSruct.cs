@@ -16,6 +16,7 @@ using StructAllforTest;
 using ModbusSyncStructLIb.ControlCheck;
 using NLog.Config;
 using Modbus.Serial;
+using System.Net.Sockets;
 
 namespace ModbusSyncStructLIb
 {
@@ -25,6 +26,11 @@ namespace ModbusSyncStructLIb
 
         public SerialPortAdapter SerialPortAdapter;
         ModbusSlave slave;
+
+        ModbusTcpSlave modbusTcp;
+
+
+        int TypeModbus;
 
         private static Logger logger;
         //События
@@ -70,9 +76,12 @@ namespace ModbusSyncStructLIb
             PropertiesSetting propertiesSetting = new PropertiesSetting();
             slaveID = 1;
             serialPort = new SerialPort(propertiesSetting.PortName);
+            
             serialPort.PortName = propertiesSetting.PortName;
             serialPort.BaudRate = propertiesSetting.BaudRate;
             serialPort.DataBits = propertiesSetting.DataBits;
+            TypeModbus = propertiesSetting.TypeComModbus;
+
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
             receivedpacket = new byte[count_send_packet*2];
@@ -88,7 +97,16 @@ namespace ModbusSyncStructLIb
             {
                 serialPort.Open();
                 SerialPortAdapter = new SerialPortAdapter(serialPort);
-                slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
+
+                if (TypeModbus == 1)
+                {
+                    slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
+                }
+
+                if (TypeModbus == 2)
+                {
+                    slave = ModbusSerialSlave.CreateAscii(slaveID, SerialPortAdapter);
+                }
 
                 logger.Info("Slave подключен");
                 

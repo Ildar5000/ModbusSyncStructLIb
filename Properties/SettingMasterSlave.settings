@@ -17,5 +17,8 @@
     <Setting Name="StopBits" Type="System.String" Scope="User">
       <Value Profile="(Default)">StopBits.One</Value>
     </Setting>
+    <Setting Name="TypeComModbus" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
