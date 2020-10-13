@@ -98,12 +98,12 @@ namespace ModbusSyncStructLIb
                 serialPort.Open();
                 SerialPortAdapter = new SerialPortAdapter(serialPort);
 
-                if (TypeModbus == 1)
+                if (TypeModbus == 0)
                 {
                     slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
                 }
 
-                if (TypeModbus == 2)
+                if (TypeModbus == 1)
                 {
                     slave = ModbusSerialSlave.CreateAscii(slaveID, SerialPortAdapter);
                 }

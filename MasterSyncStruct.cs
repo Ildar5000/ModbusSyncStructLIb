@@ -83,12 +83,12 @@ namespace ModbusSyncStructLIb
                 serialPort.Open();
                 SerialPortAdapter = new SerialPortAdapter(serialPort);
 
-                if (TypeModbus==1)
+                if (TypeModbus==0)
                 {
                     master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
                 }
 
-                if (TypeModbus == 2)
+                if (TypeModbus == 1)
                 {
                     master = ModbusSerialMaster.CreateAscii(SerialPortAdapter);
                 }
