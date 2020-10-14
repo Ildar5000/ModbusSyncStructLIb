@@ -13,6 +13,8 @@ namespace ModbusSyncStructLIb
         public Type type { get; set; }
         public DateTime dateTime { get; set; }
 
+        public int type_archv { get; set; }
+
         public MetaClassForStructandtherdata(string txt)
         {
             struct_which_need_transfer = txt;

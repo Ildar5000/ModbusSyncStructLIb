@@ -34,5 +34,10 @@ namespace ModbusSyncStructLIb.DespriptionState
         /// </summary>
         public const ushort CR16_OK = 5;
 
+        /// <summary>
+        /// Контрольная сумма сделано
+        /// </summary>
+        public const ushort arcv = 6;
+
     }
 }

@@ -36,6 +36,9 @@
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c, processorArchitecture=MSIL">
       <HintPath>packages\NLog.4.7.4\lib\net45\NLog.dll</HintPath>
     </Reference>
+    <Reference Include="SevenZip, Version=19.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\LZMA-SDK.19.0.0\lib\net20\SevenZip.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
@@ -54,6 +57,7 @@
     <Compile Include="Class1.cs" />
     <Compile Include="ControlCheck\Crc16.cs" />
     <Compile Include="DespriptionState\SlaveState.cs" />
+    <Compile Include="DespriptionState\StateArcv.cs" />
     <Compile Include="DespriptionState\StateCR.cs" />
     <Compile Include="DespriptionState\TableUsedforRegister.cs" />
     <Compile Include="EvenBase\EventSubscriptionInterface.cs" />

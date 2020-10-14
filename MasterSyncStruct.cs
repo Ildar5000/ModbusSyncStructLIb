@@ -14,6 +14,11 @@ using System.Threading;
 using NLog.Config;
 using ModbusSyncStructLIb.ControlCheck;
 using Modbus.Serial;
+using SevenZip.Compression.LZMA;
+
+using System.IO.Compression;
+using System.Runtime.Serialization.Formatters.Binary;
+using SevenZip;
 
 namespace ModbusSyncStructLIb
 {
@@ -201,11 +206,11 @@ namespace ModbusSyncStructLIb
         /// <summary>
         /// отправка инфоданных
         /// </summary>
-
         public void send_multi_message(MemoryStream stream)
         {
             ushort coilAddress = 10;
             byte[] date = stream.ToArray();
+
             int count = 50;
             count = (date.Length/2)+1;
             ushort[] date_modbus = new ushort[date.Length / 2 + 1];
@@ -257,6 +262,11 @@ namespace ModbusSyncStructLIb
                     logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
                     logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
 
+
+                    //logger.Info("Отправка архивированного файла");
+
+                    //send_single_message(1, TableUsedforRegisters.arcv);
+
                     //Console.WriteLine("Отправляем метапкет с кол-вом данных байт"+ date.Length);
                     //Console.WriteLine("Отправляем метапкет с кол-вом данных ushort" + date_modbus.Length);
 
@@ -288,7 +298,7 @@ namespace ModbusSyncStructLIb
                                     
                                     logger.Info("Отправляем запрос о статусе, так как был занят на " + i + " попытке");
                                     
-                                    Thread.Sleep(1000);
+                                    Thread.Sleep(50);
                                     status_slave = SendRequestforStatusSlave();
                                     if (status_slave == SlaveState.have_free_time|| status_slave == SlaveState.havetimetransfer)
                                     {
@@ -335,7 +345,7 @@ namespace ModbusSyncStructLIb
                                     //Console.WriteLine("Отправлено");
 
                                     logger.Trace("Отправлено");
-                                    Thread.Sleep(500);
+                                    Thread.Sleep(50);
 
                                     //Контрольная сумма
                                     crc16 = new Crc16();
@@ -372,7 +382,7 @@ namespace ModbusSyncStructLIb
                                     //Console.WriteLine("Отправлено");
 
                                     logger.Trace("Отправлено");
-                                    Thread.Sleep(500);
+                                    Thread.Sleep(50);
 
                                 }
 
@@ -392,6 +402,19 @@ namespace ModbusSyncStructLIb
                     else    //в случае если пакет меньше чем ограничения
                     {
                         logger.Trace("Передача меньше чем, пакет");
+
+                        logger.Info("Статус свободен:");
+
+                        //SendStatusforSlave(SlaveState.havetimetransfer);
+
+                        //Отправка кол-во байт
+                        Sendpaketwithcountbytes(date.Length);
+
+                        logger.Info("Статус свободен:");
+                        logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
+                        logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
+
+
                         master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
                     }
                 }
@@ -416,6 +439,7 @@ namespace ModbusSyncStructLIb
 
         }
 
+        
         /// <summary>
         /// Отправка CR16
         /// </summary>
@@ -433,7 +457,7 @@ namespace ModbusSyncStructLIb
             send_single_message(sendCR16, coilAddress);
 
             logger.Info("Ожидание ответа");
-            Thread.Sleep(100);
+            Thread.Sleep(50);
 
             //logger.Info("Отправка данных");
 
@@ -459,6 +483,9 @@ namespace ModbusSyncStructLIb
                 logger.Error(ex);
             }
         }
+
+
+
 
         /*
         #region Примеры
@@ -511,5 +538,103 @@ namespace ModbusSyncStructLIb
 
         #endregion
         */
+
+        #region 7zip 
+
+        private static Int32 dictionary = 1 << 21; //No dictionary
+        private static Int32 posStateBits = 2;
+        private static Int32 litContextBits = 3;   // for normal files  // UInt32 litContextBits = 0; // for 32-bit data                                             
+        private static Int32 litPosBits = 0;       // UInt32 litPosBits = 2; // for 32-bit data
+        private static Int32 algorithm = 2;
+        private static Int32 numFastBytes = 128;
+        private static bool eos = false;
+        private static string mf = "bt4";
+
+        private static CoderPropID[] propIDs =
+        {
+            CoderPropID.DictionarySize,
+            CoderPropID.PosStateBits,
+            CoderPropID.LitContextBits,
+            CoderPropID.LitPosBits,
+            CoderPropID.Algorithm,
+            CoderPropID.NumFastBytes,
+            CoderPropID.MatchFinder,
+            CoderPropID.EndMarker
+        };
+
+        private static object[] properties =
+        {
+            (Int32)(dictionary),
+            (Int32)(posStateBits),
+            (Int32)(litContextBits),
+            (Int32)(litPosBits),
+            (Int32)(algorithm),
+            (Int32)(numFastBytes),
+            mf,
+            eos
+        };
+
+
+        public MemoryStream compress(MemoryStream inStream, bool closeInStream)
+        {
+            inStream.Position = 0;
+            Int64 fileSize = inStream.Length;
+            MemoryStream outStream = new MemoryStream();
+
+            SevenZip.Compression.LZMA.Encoder encoder = new SevenZip.Compression.LZMA.Encoder();
+            encoder.SetCoderProperties(propIDs, properties);
+            encoder.WriteCoderProperties(outStream);
+
+            if (BitConverter.IsLittleEndian)
+            {
+                byte[] LengthHeader = BitConverter.GetBytes(fileSize);
+                outStream.Write(LengthHeader, 0, LengthHeader.Length);
+            }
+
+            encoder.Code(inStream, outStream, -1, -1, null);
+
+            if (closeInStream)
+                inStream.Close();
+
+            return outStream;
+        }
+
+
+        public MemoryStream decompress(MemoryStream inStream, bool closeInStream)
+        {
+            inStream.Position = 0;
+            MemoryStream outStream = new MemoryStream();
+
+            byte[] properties = new byte[5];
+            if (inStream.Read(properties, 0, 5) != 5)
+                throw (new Exception("input .lzma is too short"));
+
+            SevenZip.Compression.LZMA.Decoder decoder = new SevenZip.Compression.LZMA.Decoder();
+            decoder.SetDecoderProperties(properties);
+
+            long outSize = 0;
+
+            if (BitConverter.IsLittleEndian)
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    int v = inStream.ReadByte();
+                    if (v < 0)
+                        throw (new Exception("Can't Read 1"));
+
+                    outSize |= ((long)(byte)v) << (8 * i);
+                }
+            }
+
+            long compressedSize = inStream.Length - inStream.Position;
+            decoder.Code(inStream, outStream, compressedSize, outSize, null);
+
+            if (closeInStream)
+                inStream.Close();
+
+            return outStream;
+        }
+
+        #endregion
     }
 }
