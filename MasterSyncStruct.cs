@@ -267,9 +267,6 @@ namespace ModbusSyncStructLIb
 
                     //send_single_message(1, TableUsedforRegisters.arcv);
 
-                    //Console.WriteLine("Отправляем метапкет с кол-вом данных байт"+ date.Length);
-                    //Console.WriteLine("Отправляем метапкет с кол-вом данных ushort" + date_modbus.Length);
-
                     if (date_modbus.Length > count_send_packet)
                     {
                         //Console.WriteLine("Объем данных больше чем в пакете");
@@ -417,6 +414,7 @@ namespace ModbusSyncStructLIb
 
                         master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
                     }
+
                 }
                 else  //В случае если не получено данные
                 {

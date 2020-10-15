@@ -61,6 +61,7 @@
     <Compile Include="DespriptionState\StateCR.cs" />
     <Compile Include="DespriptionState\TableUsedforRegister.cs" />
     <Compile Include="EvenBase\EventSubscriptionInterface.cs" />
+    <Compile Include="EvenBase\QueueOfSentMessagesForSlave.cs" />
     <Compile Include="KeepInfoAboutOuterStruct.cs" />
     <Compile Include="MasterSyncStruct.cs" />
     <Compile Include="MetaClassForStructandtherdata.cs" />
