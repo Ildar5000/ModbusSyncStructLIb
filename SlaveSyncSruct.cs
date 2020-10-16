@@ -44,18 +44,20 @@ namespace ModbusSyncStructLIb
         /// <summary>
         /// Кол-во пакетов в одном запросе
         /// </summary>
-        /// 
         int count_send_packet = 70;
+
         /// <summary>
         /// Кол-во которое нужно передать
         /// </summary>
         int countDataStruct;
+
         /// <summary>
         /// Кол-во которое нужно передать ushort
         /// </summary>
         int countDataStructUsshort; 
         /// <summary>
         /// Кол-во переданного
+        
         /// </summary>
         int countrecivedcount = 0;
         ushort[] receive_packet_data;
@@ -101,11 +103,13 @@ namespace ModbusSyncStructLIb
 
                 if (TypeModbus == 0)
                 {
+                    logger.Info("Создания modbus RTU");
                     slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
                 }
 
                 if (TypeModbus == 1)
                 {
+                    logger.Info("Создания modbus RTU");
                     slave = ModbusSerialSlave.CreateAscii(slaveID, SerialPortAdapter);
                 }
 
@@ -253,85 +257,107 @@ namespace ModbusSyncStructLIb
             Console.WriteLine("Получено:" + countDataStructUsshort);
             if (countrecivedcount > countDataStruct)
             {
-                try
-                {
-                    Console.WriteLine("Получен конечный инфопакет:");
-
-                    int delta_start_mid = countrecivedcount - receivedpacket.Length;
-                    int delta_countreciveAndSend = Math.Abs(countDataStruct - delta_start_mid);
-                    for (int i = 0; i < delta_countreciveAndSend; i++)
-                    {
-                        data_byte_for_processing[delta_start_mid + i] = receivedpacket[i];
-                    }
-
-                    Console.WriteLine("Получен конечный инфопакет:");
-                    writebyte(data_byte_for_processing);
-
-                    //Обнуление переданных пакетов
-                    Console.WriteLine("обнуление переданных пакетов");
-                    countrecivedcount = 0;
-
-                    //собираем класс
-                    Console.WriteLine("Десерелизация объекта");
-                    //Сlass_Deserialization(data_byte_for_processing);
-                    Archive_Code(data_byte_for_processing);
-
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
-
+                processing_infopaket_endl();
             }
-
             // начало
             if (countrecivedcount == receivedpacket.Length)
             {
-                logger.Info("Получен первый инфопакет:");
+                processing_infopaket_inception();
+            }
+
+            if (countrecivedcount > receivedpacket.Length && countrecivedcount < countDataStruct)
+            {
+                processing_infopaket_middle();
+            }
+            Console.WriteLine("Переданно " + countrecivedcount);
+        }
+
+        /// <summary>
+        /// Обработка первого пакета
+        /// </summary>
+        private void processing_infopaket_inception()
+        {
+            logger.Info("Получен первый инфопакет:");
+            for (int i = 0; i < receivedpacket.Length; i++)
+            {
+                data_byte_for_processing[i] = receivedpacket[i];
+            }
+
+            //изменение состояние
+            slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
+            logger.Info("В регистр состояние" + slave.DataStore.HoldingRegisters[1]);
+
+
+            logger.Info("Обработан первый инфопакет:");
+            writebyte(receivedpacket);
+        }
+        
+        /// <summary>
+        /// Обработка середины
+        /// </summary>
+        private void processing_infopaket_middle()
+        {
+            try
+            {
+                logger.Info("Получен серединный инфопакет");
+                int delta_countreciveAndSend = countDataStruct - countrecivedcount;
+                int delta_start_mid = countrecivedcount - receivedpacket.Length;
                 for (int i = 0; i < receivedpacket.Length; i++)
                 {
-                    data_byte_for_processing[i] = receivedpacket[i];
+                    data_byte_for_processing[delta_start_mid + i] = receivedpacket[i];
                 }
 
                 //изменение состояние
                 slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
                 logger.Info("В регистр состояние" + slave.DataStore.HoldingRegisters[1]);
 
-
-                logger.Info("Обработан первый инфопакет:");
+                logger.Info("Получен серединный инфопакет");
                 writebyte(receivedpacket);
-
             }
-            if (countrecivedcount > receivedpacket.Length && countrecivedcount < countDataStruct)
+            catch (Exception ex)
             {
-                try
+                logger.Error(ex);
+            }
+        }
+        
+        /// <summary>
+        /// Обработка конца пакета
+        /// </summary>
+        private void processing_infopaket_endl()
+        {
+            try
+            {
+                //Console.WriteLine("Получен конечный инфопакет:");
+                logger.Info("Получен конечный инфопакет:");
+                
+                int delta_start_mid = countrecivedcount - receivedpacket.Length;
+                int delta_countreciveAndSend = Math.Abs(countDataStruct - delta_start_mid);
+                for (int i = 0; i < delta_countreciveAndSend; i++)
                 {
-                    logger.Info("Получен серединный инфопакет");
-                    int delta_countreciveAndSend = countDataStruct - countrecivedcount;
-                    int delta_start_mid = countrecivedcount - receivedpacket.Length;
-                    for (int i = 0; i < receivedpacket.Length; i++)
-                    {
-                        data_byte_for_processing[delta_start_mid + i] = receivedpacket[i];
-                    }
-
-                    //изменение состояние
-                    slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
-                    logger.Info("В регистр состояние" + slave.DataStore.HoldingRegisters[1]);
-
-                    logger.Info("Получен серединный инфопакет");
-                    writebyte(receivedpacket);
+                    data_byte_for_processing[delta_start_mid + i] = receivedpacket[i];
                 }
-                catch (Exception ex)
-                {
-                    logger.Error(ex);
-                }
+
+                logger.Info("Получен конечный инфопакет обработка:");
+                writebyte(data_byte_for_processing);
+
+                //Обнуление переданных пакетов
+                logger.Info("обнуление переданных пакетов");
+                countrecivedcount = 0;
+
+                //собираем класс
+                Console.WriteLine("Архив и десерелизация объекта");
+                //Сlass_Deserialization(data_byte_for_processing);
+                Archive_Code(data_byte_for_processing);
 
             }
-            Console.WriteLine("Переданно " + countrecivedcount);
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         /// <summary>
-        /// Серелизация класса
+        /// Десерелизация класса
         /// </summary>
         private void Сlass_Deserialization(byte[] date)
         {
@@ -372,11 +398,13 @@ namespace ModbusSyncStructLIb
         {
             try
             {
-                logger.Info("Формирование класса:");
                 MemoryStream stream = new MemoryStream(date);
                 BinaryFormatter formatter = new BinaryFormatter();
+                logger.Info("Декомпрессия");
                 MemoryStream memory =decompress(stream,false);
                 byte[] class_outdecompress = memory.ToArray();
+
+                logger.Info("Формирование класса:");
                 Сlass_Deserialization(class_outdecompress);
             }
             catch(Exception ex)
@@ -399,6 +427,7 @@ namespace ModbusSyncStructLIb
             }
             Console.WriteLine("");
         }
+
 
 
         #region 7zip 

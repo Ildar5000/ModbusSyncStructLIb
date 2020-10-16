@@ -98,11 +98,13 @@ namespace ModbusSyncStructLIb
 
                 if (TypeModbus==0)
                 {
+                    logger.Info("Создания modbus RTU");
                     master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
                 }
 
                 if (TypeModbus == 1)
                 {
+                    logger.Info("Создания modbus Ascii");
                     master = ModbusSerialMaster.CreateAscii(SerialPortAdapter);
                 }
 
@@ -214,6 +216,7 @@ namespace ModbusSyncStructLIb
         /// </summary>
         public void send_multi_message(MemoryStream stream)
         {
+            logger.Info("Изменения структуры и подготовка к передачи");
             //Мастер занят
             state_master = 1;
 
@@ -280,18 +283,13 @@ namespace ModbusSyncStructLIb
                     else    //в случае если пакет меньше чем ограничения
                     {
                         logger.Trace("Передача меньше чем, пакет");
-
                         logger.Info("Статус свободен:");
-
                         //SendStatusforSlave(SlaveState.havetimetransfer);
-
                         //Отправка кол-во байт
                         Sendpaketwithcountbytes(date.Length);
-
                         logger.Info("Статус свободен:");
                         logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
                         logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
-
 
                         master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
                     }
@@ -301,9 +299,9 @@ namespace ModbusSyncStructLIb
                 {
                     //Console.WriteLine("Пакет не может передаться, связи с тем, что Slave занят");
                     logger.Warn("Пакет не может передаться, связи с тем, что Slave занят");
+                    
                     int count_try=0;
-
-                    repeat(stream, count_try);
+                    repeat_try_send(stream, count_try);
 
                 }
             }
@@ -337,8 +335,6 @@ namespace ModbusSyncStructLIb
             //кол-во отправок
             for (int i = 0; i < countneedsend; i++)
             {
-                int counter_reguest_status = 0;
-
                 //lonsole.WriteLine("Отправляем запрос о статусе");
                 logger.Info("Отправляем запрос о статусе");
 
@@ -359,11 +355,9 @@ namespace ModbusSyncStructLIb
                 else
                 {
                     logger.Trace("Slave занят: Передача отменена");
-                    counter_reguest_status = 0;
                 }
             }
         }
-
 
         /// <summary>
         /// конечная передача
@@ -405,7 +399,7 @@ namespace ModbusSyncStructLIb
             //Отправка контрольной суммы
             send_cr16_message(controlsum16);
 
-            Console.WriteLine("Cформирован");
+            Console.WriteLine("Cформирован и передан");
         }
 
         /// <summary>
@@ -430,7 +424,7 @@ namespace ModbusSyncStructLIb
             //Console.WriteLine("Отправка данных");
             logger.Trace("Отправка данных");
             write_console(sentpacket);
-            k = 0;
+
             //Console.WriteLine("Отправка данных");
             logger.Trace("Отправка данных");
 
@@ -450,10 +444,11 @@ namespace ModbusSyncStructLIb
         /// </summary>
         /// <param name="stream">объект</param>
         /// <param name="count">кол-во попыток</param>
-        public void repeat(MemoryStream stream,int count_try_recurs)
+        public void repeat_try_send(MemoryStream stream,int count_try_recurs)
         {
             if (count_try_recurs != 3)
             {
+                logger.Info("Попытка передачи " + count_try_recurs);
                 //Мастер занят
                 state_master = 1;
 
@@ -475,21 +470,14 @@ namespace ModbusSyncStructLIb
                 Console.WriteLine("");
                 //конвертирует в ushort
 
-                logger.Info("Преобразование в ushort:Начато");
+                logger.Info("Преобразование в ushort: Начато");
                 Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);
-                logger.Info("Преобразование в ushort:закончено");
+                logger.Info("Преобразование в ushort: Закончено");
 
 
                 write_console(date_modbus);
 
                 byte[] date_unpack = new byte[date.Length];
-
-                /*
-                Buffer.BlockCopy(date_modbus, 0, date_unpack, 0, date.Length);
-                Console.WriteLine("");
-                write_console(date_unpack);
-                Console.WriteLine("");
-                */
 
                 try
                 {
@@ -518,6 +506,7 @@ namespace ModbusSyncStructLIb
                             
                             Console.WriteLine("Cформирован");
                             state_master = 0;
+                            logger.Info("Попытка передачи " + count_try_recurs + "Удачное");
                             return;
                         }
                         else    //в случае если пакет меньше чем ограничения
@@ -534,9 +523,10 @@ namespace ModbusSyncStructLIb
                             logger.Info("Отправляем метапкет с кол - вом данных ushort: " + date_modbus.Length);
 
                             master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
+                            logger.Info("Попытка передачи " + count_try_recurs + "Удачное");
                             return;
                         }
-
+                        
                     }
                     else  //В случае если не получено данные
                     {
@@ -546,7 +536,7 @@ namespace ModbusSyncStructLIb
                         Thread.Sleep(1000);
                         
                         count_try_recurs++;
-                        repeat(stream, count_try_recurs);
+                        repeat_try_send(stream, count_try_recurs);
 
                     }
                 }
