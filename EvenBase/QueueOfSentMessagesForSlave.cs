@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ModbusSyncStructLIb.EvenBase
@@ -28,7 +29,8 @@ namespace ModbusSyncStructLIb.EvenBase
         {
             numbers.Enqueue(message);
             count++;
-            send();
+            Thread thread = new Thread(recursve);
+            thread.Start();
         }
 
         public void send()
@@ -38,6 +40,22 @@ namespace ModbusSyncStructLIb.EvenBase
                 MemoryStream memory = numbers.Dequeue();
                 master.send_multi_message(memory);
                 count--;
+            }
+        }
+
+        public void recursve()
+        {
+            while(true)
+            {
+                if (count!=0 )
+                {
+                    if (master.state_master == 0 && numbers.Count!=0)
+                    {
+                        MemoryStream memory = numbers.Dequeue();
+                        master.send_multi_message(memory);
+                        count--;
+                    }
+                }
             }
         }
     }

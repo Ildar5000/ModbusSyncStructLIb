@@ -24,14 +24,25 @@ namespace ModbusSyncStructLIb
 {
     public class MasterSyncStruct
     {
+        #region modbus
         SerialPort serialPort;
         SerialPortAdapter SerialPortAdapter;
-
-        byte slaveID;
-        PropertiesSetting propertiesSetting;
-        ModbusSerialMaster master;
-
         ModbusIpMaster masterTCP;
+        
+        ModbusSerialMaster master;
+        #endregion
+
+        public byte slaveID;
+        
+        #region setting
+        PropertiesSetting propertiesSetting;
+        #endregion
+
+        /// <summary>
+        /// Состояние master
+        /// </summary>
+        public int state_master = 0;
+
 
         private static Logger logger;
         ushort status_slave;
@@ -44,14 +55,11 @@ namespace ModbusSyncStructLIb
             var loggerconf = new XmlLoggingConfiguration("NLog.config");
             logger = LogManager.GetCurrentClassLogger();
 
-
             propertiesSetting = new PropertiesSetting();
-
             serialPort = new SerialPort(propertiesSetting.PortName); //Create a new SerialPort object.
             serialPort.PortName = propertiesSetting.PortName;
             serialPort.BaudRate = propertiesSetting.BaudRate;
             serialPort.DataBits = propertiesSetting.DataBits;
-
 
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
@@ -181,8 +189,6 @@ namespace ModbusSyncStructLIb
         }
 
 
-
-
         public void write_console(byte[] date)
         {
             //Console.WriteLine("bytes:");
@@ -208,6 +214,9 @@ namespace ModbusSyncStructLIb
         /// </summary>
         public void send_multi_message(MemoryStream stream)
         {
+            //Мастер занят
+            state_master = 1;
+
             ushort coilAddress = 10;
             byte[] date = stream.ToArray();
 
@@ -262,11 +271,7 @@ namespace ModbusSyncStructLIb
                     logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
                     logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
 
-
-                    //logger.Info("Отправка архивированного файла");
-
-                    //send_single_message(1, TableUsedforRegisters.arcv);
-
+                    //если данные больше чем переданных
                     if (date_modbus.Length > count_send_packet)
                     {
                         //Console.WriteLine("Объем данных больше чем в пакете");
@@ -357,6 +362,9 @@ namespace ModbusSyncStructLIb
                                     send_cr16_message(controlsum16);
 
                                     Console.WriteLine("Cформирован");
+                                    
+                                    //Мастер занят
+                                    state_master = 0;
                                 }
                                 else
                                 {
@@ -379,6 +387,8 @@ namespace ModbusSyncStructLIb
                                     //Console.WriteLine("Отправлено");
 
                                     logger.Trace("Отправлено");
+
+                                    state_master = 0;
                                     Thread.Sleep(50);
 
                                 }
