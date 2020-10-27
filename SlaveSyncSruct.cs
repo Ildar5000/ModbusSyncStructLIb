@@ -18,6 +18,7 @@ using NLog.Config;
 using Modbus.Serial;
 using System.Net.Sockets;
 using SevenZip;
+using System.Diagnostics;
 
 namespace ModbusSyncStructLIb
 {
@@ -73,6 +74,7 @@ namespace ModbusSyncStructLIb
 
         public SlaveSyncSruct()
         {
+
             var loggerconf = new XmlLoggingConfiguration("NLog.config");
             logger = LogManager.GetCurrentClassLogger();
 
@@ -87,6 +89,11 @@ namespace ModbusSyncStructLIb
 
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
+
+            serialPort.ReadTimeout = 1000;
+            serialPort.WriteTimeout = 1000;
+
+
             receivedpacket = new byte[count_send_packet*2];
             receive_packet_data = new ushort[count_send_packet];
             //data_byte= new byte[count_send_packet*2];
@@ -105,12 +112,17 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Создания modbus RTU");
                     slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
+                    slave.Transport.WriteTimeout = 1000;
+                    slave.Transport.ReadTimeout = 1000;
                 }
 
                 if (TypeModbus == 1)
                 {
                     logger.Info("Создания modbus RTU");
                     slave = ModbusSerialSlave.CreateAscii(slaveID, SerialPortAdapter);
+                    slave.Transport.WriteTimeout = 1000;
+                    slave.Transport.ReadTimeout = 1000;
+
                 }
 
                 logger.Info("Slave подключен");

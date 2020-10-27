@@ -63,10 +63,14 @@ namespace ModbusSyncStructLIb
 
             serialPort.Parity = Parity.None;
             serialPort.StopBits = StopBits.One;
+
+            serialPort.ReadTimeout = 1000;
+            serialPort.WriteTimeout = 1000;
         }
 
         public MasterSyncStruct(string text)
         {
+            
             var loggerconf = new XmlLoggingConfiguration("NLog.config");
             logger = LogManager.GetCurrentClassLogger();
 
@@ -100,12 +104,19 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Создания modbus RTU");
                     master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
+                    master.Transport.Retries = 1000;
+                    master.Transport.ReadTimeout = 1000;
+                    master.Transport.WriteTimeout = 1000;
+
                 }
 
                 if (TypeModbus == 1)
                 {
                     logger.Info("Создания modbus Ascii");
                     master = ModbusSerialMaster.CreateAscii(SerialPortAdapter);
+                    master.Transport.Retries = 1000;
+                    master.Transport.ReadTimeout = 1000;
+                    master.Transport.WriteTimeout = 1000;
                 }
 
                 //ModbusIpMaster modbusIpMaster
@@ -309,6 +320,9 @@ namespace ModbusSyncStructLIb
             {
                 Console.WriteLine(ex);
                 logger.Error(ex);
+                master.Dispose();
+                close();
+                Open();
             }
             
 
@@ -319,6 +333,7 @@ namespace ModbusSyncStructLIb
             */
 
         }
+        
         /// <summary>
         /// функция где объем больше чем пакете
         /// </summary>
