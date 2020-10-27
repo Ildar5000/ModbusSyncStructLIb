@@ -186,7 +186,6 @@ namespace ModbusSyncStructLIb
         public void SendStatusforSlave(ushort status)
         {
             ushort startAddress = 0;
-            ushort numOfPoints = 1;
 
             master.WriteSingleRegister(slaveID, startAddress, status);
         }
@@ -237,8 +236,6 @@ namespace ModbusSyncStructLIb
             int count = 50;
             count = (date.Length/2)+1;
             ushort[] date_modbus = new ushort[date.Length / 2 + 1];
-
-            int needtopacketsend;
 
             //Кол-во переднных какналов за 1 запрос
             int count_send_packet = 70;
@@ -473,8 +470,6 @@ namespace ModbusSyncStructLIb
                 int count = 50;
                 count = (date.Length / 2) + 1;
                 ushort[] date_modbus = new ushort[date.Length / 2 + 1];
-
-                int needtopacketsend;
 
                 //Кол-во переднных какналов за 1 запрос
                 int count_send_packet = 70;
