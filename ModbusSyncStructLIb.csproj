@@ -78,6 +78,7 @@
       <DependentUpon>SettingMasterSlave.settings</DependentUpon>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="Settings\SettingsModbus.cs" />
     <Compile Include="SlaveSyncSruct.cs" />
   </ItemGroup>
   <ItemGroup>
