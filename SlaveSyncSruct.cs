@@ -19,6 +19,8 @@ using Modbus.Serial;
 using System.Net.Sockets;
 using SevenZip;
 using System.Diagnostics;
+using System.Xml.Serialization;
+using ModbusSyncStructLIb.Settings;
 
 namespace ModbusSyncStructLIb
 {
@@ -78,6 +80,53 @@ namespace ModbusSyncStructLIb
             var loggerconf = new XmlLoggingConfiguration("NLog.config");
             logger = LogManager.GetCurrentClassLogger();
 
+            var path = System.IO.Path.GetFullPath(@"Settingsmodbus.xml");
+
+            if (File.Exists(path) == true)
+            {
+                SettingsModbus settings;
+                // десериализация
+                using (FileStream fs = new FileStream("Settingsmodbus.xml", FileMode.OpenOrCreate))
+                {
+                    XmlSerializer formatter = new XmlSerializer(typeof(SettingsModbus));
+                    settings = (SettingsModbus)formatter.Deserialize(fs);
+
+                    logger.Info("Объект десериализован");
+                }
+
+                serialPort = new SerialPort(settings.ComName);
+                serialPort.BaudRate = settings.BoudRate;
+                serialPort.DataBits = settings.DataBits;
+                serialPort.Parity = (Parity)settings.Party_type_int;
+ 
+                switch (settings.StopBits_type_str)
+                {
+                    case "One":
+                        serialPort.StopBits = StopBits.One;
+                        break;
+                    case "OnePointFive":
+                        serialPort.StopBits = StopBits.OnePointFive;
+                        break;
+                    case "Two":
+                        serialPort.StopBits = StopBits.Two;
+                        break;
+                    default:
+                        //none
+                        serialPort.StopBits = StopBits.None;
+                        break;
+                }
+
+                serialPort.ReadTimeout = settings.ReadTimeout;
+                serialPort.WriteTimeout = settings.WriteTimeout;
+
+            }
+            else
+            {
+                logger.Error("Нет файла");
+            }
+
+
+            /*
             PropertiesSetting propertiesSetting = new PropertiesSetting();
             slaveID = 1;
             serialPort = new SerialPort(propertiesSetting.PortName);
@@ -92,7 +141,7 @@ namespace ModbusSyncStructLIb
 
             serialPort.ReadTimeout = 1000;
             serialPort.WriteTimeout = 1000;
-
+            */
 
             receivedpacket = new byte[count_send_packet*2];
             receive_packet_data = new ushort[count_send_packet];
