@@ -78,7 +78,27 @@ namespace ModbusSyncStructLIb
                 serialPort = new SerialPort(settings.ComName);
                 serialPort.BaudRate = settings.BoudRate;
                 serialPort.DataBits = settings.DataBits;
-                serialPort.Parity = (Parity)settings.Party_type_int;
+
+                switch (settings.Party_type_str)
+                {
+                    case "Space":
+                        serialPort.Parity = Parity.Space;
+                        break;
+                    case "Even":
+                        serialPort.Parity = Parity.Even;
+                        break;
+                    case "Mark":
+                        serialPort.Parity = Parity.Mark;
+                        break;
+                    case "Odd":
+                        serialPort.Parity = Parity.Odd;
+                        break;
+                    default:
+                        //none
+                        serialPort.Parity = Parity.None;
+                        break;
+                }
+
 
                 switch (settings.StopBits_type_str)
                 {
@@ -96,7 +116,7 @@ namespace ModbusSyncStructLIb
                         serialPort.StopBits = StopBits.None;
                         break;
                 }
-          
+
                 serialPort.ReadTimeout = settings.ReadTimeout;
                 serialPort.WriteTimeout = settings.WriteTimeout;
                 IP_client = settings.IP_client;
@@ -154,7 +174,6 @@ namespace ModbusSyncStructLIb
         {
             try
             {
-                Console.WriteLine(propertiesSetting.PortName);
                 serialPort.Open();
                 SerialPortAdapter = new SerialPortAdapter(serialPort);
 
@@ -162,9 +181,12 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Создания modbus RTU");
                     master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
+                    
                     master.Transport.Retries = 1000;
                     master.Transport.ReadTimeout = 1000;
                     master.Transport.WriteTimeout = 1000;
+
+
                     //slaveID = 1;
                     ushort startAddress = 1;
                     ushort numOfPoints = 10;
@@ -176,9 +198,11 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Создания modbus Ascii");
                     master = ModbusSerialMaster.CreateAscii(SerialPortAdapter);
+                    
                     master.Transport.Retries = 1000;
                     master.Transport.ReadTimeout = 1000;
                     master.Transport.WriteTimeout = 1000;
+
                     //slaveID = 1;
                     ushort startAddress = 1;
                     ushort numOfPoints = 10;

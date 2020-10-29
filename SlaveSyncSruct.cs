@@ -222,13 +222,14 @@ namespace ModbusSyncStructLIb
                     logger.Info("Slave состояние" + slave.DataStore.HoldingRegisters[1]);
 
 
-                    //var listenTask = slave.ListenAsync();
+                    var listenTask = slave.ListenAsync();
                 }
 
                 if (TypeModbus==2)
                 {
                     logger.Info("Создания modbus TCP");
-                    ListenerTCP = new TcpListener(new IPAddress(IP_client_port), IP_client_port);
+                    IPAddress address = IPAddress.Parse(IP_client);
+                    ListenerTCP = new TcpListener(address, IP_client_port);
                     Thread thread = new Thread(ListenerTCP.Start);
                     
                     thread.Start();
@@ -238,7 +239,7 @@ namespace ModbusSyncStructLIb
                     modbusTcp.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                     modbusTcp.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
 
-                    //var listenTask=  modbusTcp.ListenAsync();
+                    var listenTask=  modbusTcp.ListenAsync();
                 }
                 
             }
@@ -394,7 +395,7 @@ namespace ModbusSyncStructLIb
             {
                 if (modbusTcp.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
                 {
-                    logger.Info("Состояние slave" + slave.DataStore.HoldingRegisters[1]);
+                    logger.Info("Состояние slave" + modbusTcp.DataStore.HoldingRegisters[1]);
                     //если данные больше 100, то это кол-ве байт
                     if (date > 70)
                     {
@@ -411,7 +412,7 @@ namespace ModbusSyncStructLIb
                     }
 
                     modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                    logger.Info("Slave перешел в состоянии передача" + slave.DataStore.HoldingRegisters[1]);
+                    logger.Info("Slave перешел в состоянии передача" + modbusTcp.DataStore.HoldingRegisters[1]);
 
                 }
                 if (modbusTcp.DataStore.HoldingRegisters[1] == SlaveState.havechecktotime)
