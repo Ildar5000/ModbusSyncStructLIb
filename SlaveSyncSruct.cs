@@ -21,6 +21,7 @@ using SevenZip;
 using System.Diagnostics;
 using System.Xml.Serialization;
 using ModbusSyncStructLIb.Settings;
+using System.Net;
 
 namespace ModbusSyncStructLIb
 {
@@ -29,12 +30,12 @@ namespace ModbusSyncStructLIb
         public SerialPort serialPort;
 
         public SerialPortAdapter SerialPortAdapter;
-        ModbusSlave slave;
+        public ModbusSlave slave;
 
-        ModbusTcpSlave modbusTcp;
+        public ModbusTcpSlave modbusTcp;
+        public TcpListener ListenerTCP;
 
-
-        int TypeModbus;
+        int TypeModbus=0;
 
         private static Logger logger;
         //События
@@ -65,7 +66,7 @@ namespace ModbusSyncStructLIb
         int countrecivedcount = 0;
         ushort[] receive_packet_data;
         byte[] data_byte_for_processing;
-        byte slaveID;
+        byte slaveID=1;
         byte[] receivedpacket;
         public MetaClassForStructandtherdata metaClass;
 
@@ -73,6 +74,9 @@ namespace ModbusSyncStructLIb
         /// Контрольная сумма
         /// </summary>
         private ushort cr16;
+
+        string IP_client;
+        int IP_client_port = 502;
 
         public SlaveSyncSruct()
         {
@@ -91,14 +95,34 @@ namespace ModbusSyncStructLIb
                     XmlSerializer formatter = new XmlSerializer(typeof(SettingsModbus));
                     settings = (SettingsModbus)formatter.Deserialize(fs);
 
-                    logger.Info("Объект десериализован");
                 }
 
                 serialPort = new SerialPort(settings.ComName);
                 serialPort.BaudRate = settings.BoudRate;
                 serialPort.DataBits = settings.DataBits;
                 serialPort.Parity = (Parity)settings.Party_type_int;
- 
+
+                switch (settings.Party_type_str)
+                {
+                    case "Space":
+                        serialPort.Parity = Parity.Space;
+                        break;
+                    case "Even":
+                        serialPort.Parity = Parity.Even;
+                        break;
+                    case "Mark":
+                        serialPort.Parity = Parity.Mark;
+                        break;
+                    case "Odd":
+                        serialPort.Parity = Parity.Odd;
+                        break;
+                    default:
+                        //none
+                        serialPort.Parity = Parity.None;
+                        break;
+                }
+
+
                 switch (settings.StopBits_type_str)
                 {
                     case "One":
@@ -116,8 +140,16 @@ namespace ModbusSyncStructLIb
                         break;
                 }
 
+                //serialPort.Parity = Parity.None;
+                //serialPort.StopBits = StopBits.One;
+
                 serialPort.ReadTimeout = settings.ReadTimeout;
                 serialPort.WriteTimeout = settings.WriteTimeout;
+                IP_client = settings.IP_client;
+                IP_client_port = settings.port_IP_client;
+                
+                slaveID = settings.slaveID;
+                TypeModbus = settings.typeModbus;
 
             }
             else
@@ -161,34 +193,54 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Создания modbus RTU");
                     slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
+                    
                     slave.Transport.WriteTimeout = 1000;
                     slave.Transport.ReadTimeout = 1000;
+                    
+                    logger.Info("Slave подключен");
+                    slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
+                    slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
+                    slave.DataStore.HoldingRegisters[1] = 0;
+                    
+                    logger.Info("Slave состояние" + slave.DataStore.HoldingRegisters[1]);
+
+                    var listenTask = slave.ListenAsync();
                 }
 
                 if (TypeModbus == 1)
                 {
-                    logger.Info("Создания modbus RTU");
+                    logger.Info("Создания modbus Ascii");
                     slave = ModbusSerialSlave.CreateAscii(slaveID, SerialPortAdapter);
                     slave.Transport.WriteTimeout = 1000;
                     slave.Transport.ReadTimeout = 1000;
+                    
+                    
+                    logger.Info("Slave подключен");
+                    slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
+                    slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
+                    slave.DataStore.HoldingRegisters[1] = 0;
+                    logger.Info("Slave состояние" + slave.DataStore.HoldingRegisters[1]);
 
+
+                    //var listenTask = slave.ListenAsync();
                 }
 
-                logger.Info("Slave подключен");
+                if (TypeModbus==2)
+                {
+                    logger.Info("Создания modbus TCP");
+                    ListenerTCP = new TcpListener(new IPAddress(IP_client_port), IP_client_port);
+                    Thread thread = new Thread(ListenerTCP.Start);
+                    
+                    thread.Start();
+
+                    modbusTcp = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP);
+
+                    modbusTcp.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
+                    modbusTcp.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
+
+                    //var listenTask=  modbusTcp.ListenAsync();
+                }
                 
-                slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
-                slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
-
-                slave.DataStore.HoldingRegisters[1] = 0;
-                logger.Info("Slave состояние"+ slave.DataStore.HoldingRegisters[1]);
-
-                //for (int i=0;i<100;i++)
-                //{
-                //    slave.DataStore.HoldingRegisters[i] = 0;
-                //    Console.WriteLine(i);
-                //}
-
-                var listenTask = slave.ListenAsync();
             }
             catch(Exception ex)
             {
@@ -213,31 +265,65 @@ namespace ModbusSyncStructLIb
                     //запросы состояния
                     if (e.Data.B.Count == 1)
                     {
-                        logger.Info("Перешел в состояние " + e.Data.B[0]+" обработка");
-                        slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+                        if (slave != null)
+                        {
+                            logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
+                            slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
 
-                        processing_singleregx(e.Data.B[0]);
-                        //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
-                        logger.Info("Пришла команда на обработку" + e.Data.B[0]);
+                            processing_singleregx(e.Data.B[0]);
+                            //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                            logger.Info("Пришла команда на обработку" + e.Data.B[0]);
+                        }
+
+                        if (modbusTcp != null)
+                        {
+                            logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
+                            modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+
+                            processing_singleregx(e.Data.B[0]);
+                            //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                            logger.Info("Пришла команда на обработку" + e.Data.B[0]);
+                        }
 
                     }
 
                     if (e.Data.B.Count > 1)
                     {
-                        //Console.WriteLine("Пришел пакет с данными:");
-                        logger.Info("Пришел пакет с данными:");
-                        for (int i = 0; i < e.Data.B.Count; i++)
-                        {
-                            receive_packet_data[i] = e.Data.B[i];
-                            Console.Write(receive_packet_data[i]+" ");
-                        }
-                        Console.WriteLine("");
-                        logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
-                        slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
 
-                        //Console.WriteLine("Обработка пакета");
-                        logger.Info("Обработка пакета");
-                        processing_infopaket(receive_packet_data);
+                        if (modbusTcp != null)
+                        {
+                            //Console.WriteLine("Пришел пакет с данными:");
+                            logger.Info("Пришел пакет с данными:");
+                            for (int i = 0; i < e.Data.B.Count; i++)
+                            {
+                                receive_packet_data[i] = e.Data.B[i];
+                                Console.Write(receive_packet_data[i] + " ");
+                            }
+                            Console.WriteLine("");
+                            logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
+                            modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+
+                            //Console.WriteLine("Обработка пакета");
+                            logger.Info("Обработка пакета");
+                            processing_infopaket(receive_packet_data);
+                        }
+                        if (slave!=null)
+                        {
+                            //Console.WriteLine("Пришел пакет с данными:");
+                            logger.Info("Пришел пакет с данными:");
+                            for (int i = 0; i < e.Data.B.Count; i++)
+                            {
+                                receive_packet_data[i] = e.Data.B[i];
+                                Console.Write(receive_packet_data[i] + " ");
+                            }
+                            Console.WriteLine("");
+                            logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
+                            slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+
+                            //Console.WriteLine("Обработка пакета");
+                            logger.Info("Обработка пакета");
+                            processing_infopaket(receive_packet_data);
+                        }
                     }                  
 
                     break;
@@ -261,46 +347,94 @@ namespace ModbusSyncStructLIb
         /// </summary>
         private void processing_singleregx(ushort date)
         {
-            if (slave.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
+            if (slave!=null)
             {
-                logger.Info("Состояние slave" + slave.DataStore.HoldingRegisters[1]);
-                //если данные больше 100, то это кол-ве байт
-                if (date > 70)
+                if (slave.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
                 {
-                    countDataStruct = Convert.ToInt32(date);
-                    //Console.WriteLine("Получен объем данных в байт:" + countDataStruct);
-                    logger.Info("Получен объем данных в байт:" + countDataStruct);
+                    logger.Info("Состояние slave" + slave.DataStore.HoldingRegisters[1]);
+                    //если данные больше 100, то это кол-ве байт
+                    if (date > 70)
+                    {
+                        countDataStruct = Convert.ToInt32(date);
+                        //Console.WriteLine("Получен объем данных в байт:" + countDataStruct);
+                        logger.Info("Получен объем данных в байт:" + countDataStruct);
 
-                    int dataushort = (countDataStruct / 2) + 1;
-                    //Console.WriteLine("Получен объем данных в ushort:" + dataushort);
-                    logger.Info("Получен объем данных в ushort:" + dataushort);
+                        int dataushort = (countDataStruct / 2) + 1;
+                        //Console.WriteLine("Получен объем данных в ushort:" + dataushort);
+                        logger.Info("Получен объем данных в ushort:" + dataushort);
 
-                    data_byte_for_processing = new byte[countDataStruct];
-                    countDataStructUsshort = (countDataStruct / 2) + 1;
-                }
-
-                slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                logger.Info("Slave перешел в состоянии передача" + slave.DataStore.HoldingRegisters[1]);
-
-            }
-            if (slave.DataStore.HoldingRegisters[1] == SlaveState.havechecktotime)
-            {
-                logger.Info("Состояние slave" + slave.DataStore.HoldingRegisters[1]);
-                logger.Info("Состояние slave проверка контрольной суммы");
-                // В случае если идет проверка системы
-                if (cr16 == date)
-                {
-                    logger.Info("Сумма совпала");
-
-                    slave.DataStore.HoldingRegisters[5] = StateCR.haveNotError;
-                    logger.Info("В регистр проверки контрольной суммы записался (проверка CR16 состоялась)" + slave.DataStore.HoldingRegisters[5]);
+                        data_byte_for_processing = new byte[countDataStruct];
+                        countDataStructUsshort = (countDataStruct / 2) + 1;
+                    }
 
                     slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                    logger.Info("В регистр состояние (проверка CR16 состоялась)" + slave.DataStore.HoldingRegisters[1]);
+                    logger.Info("Slave перешел в состоянии передача" + slave.DataStore.HoldingRegisters[1]);
 
-                    //logger.Info("Сумма совпала " + SlaveState.have_free_time);
+                }
+                if (slave.DataStore.HoldingRegisters[1] == SlaveState.havechecktotime)
+                {
+                    logger.Info("Состояние slave" + slave.DataStore.HoldingRegisters[1]);
+                    logger.Info("Состояние slave проверка контрольной суммы");
+                    // В случае если идет проверка системы
+                    if (cr16 == date)
+                    {
+                        logger.Info("Сумма совпала");
+
+                        slave.DataStore.HoldingRegisters[5] = StateCR.haveNotError;
+                        logger.Info("В регистр проверки контрольной суммы записался (проверка CR16 состоялась)" + slave.DataStore.HoldingRegisters[5]);
+
+                        slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                        logger.Info("В регистр состояние (проверка CR16 состоялась)" + slave.DataStore.HoldingRegisters[1]);
+
+                        //logger.Info("Сумма совпала " + SlaveState.have_free_time);
+                    }
                 }
             }
+            if (modbusTcp!=null)
+            {
+                if (modbusTcp.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
+                {
+                    logger.Info("Состояние slave" + slave.DataStore.HoldingRegisters[1]);
+                    //если данные больше 100, то это кол-ве байт
+                    if (date > 70)
+                    {
+                        countDataStruct = Convert.ToInt32(date);
+                        //Console.WriteLine("Получен объем данных в байт:" + countDataStruct);
+                        logger.Info("Получен объем данных в байт:" + countDataStruct);
+
+                        int dataushort = (countDataStruct / 2) + 1;
+                        //Console.WriteLine("Получен объем данных в ushort:" + dataushort);
+                        logger.Info("Получен объем данных в ushort:" + dataushort);
+
+                        data_byte_for_processing = new byte[countDataStruct];
+                        countDataStructUsshort = (countDataStruct / 2) + 1;
+                    }
+
+                    modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                    logger.Info("Slave перешел в состоянии передача" + slave.DataStore.HoldingRegisters[1]);
+
+                }
+                if (modbusTcp.DataStore.HoldingRegisters[1] == SlaveState.havechecktotime)
+                {
+                    logger.Info("Состояние slave" + modbusTcp.DataStore.HoldingRegisters[1]);
+                    logger.Info("Состояние slave проверка контрольной суммы");
+                    // В случае если идет проверка системы
+                    if (cr16 == date)
+                    {
+                        logger.Info("Сумма совпала");
+
+                        modbusTcp.DataStore.HoldingRegisters[5] = StateCR.haveNotError;
+                        logger.Info("В регистр проверки контрольной суммы записался (проверка CR16 состоялась)" + modbusTcp.DataStore.HoldingRegisters[5]);
+
+                        modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                        logger.Info("В регистр состояние (проверка CR16 состоялась)" + modbusTcp.DataStore.HoldingRegisters[1]);
+
+                        //logger.Info("Сумма совпала " + SlaveState.have_free_time);
+                    }
+                }
+            }
+
+
         }
 
 
@@ -345,8 +479,17 @@ namespace ModbusSyncStructLIb
             }
 
             //изменение состояние
-            slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
-            logger.Info("В регистр состояние" + slave.DataStore.HoldingRegisters[1]);
+
+            if (slave!=null)
+            {
+                slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
+                logger.Info("В регистр состояние" + slave.DataStore.HoldingRegisters[1]);
+            }
+            if (modbusTcp!=null)
+            {
+                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
+                logger.Info("В регистр состояние" + modbusTcp.DataStore.HoldingRegisters[1]);
+            }
 
 
             logger.Info("Обработан первый инфопакет:");
@@ -368,8 +511,18 @@ namespace ModbusSyncStructLIb
                     data_byte_for_processing[delta_start_mid + i] = receivedpacket[i];
                 }
 
-                //изменение состояние
-                slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
+                if (slave!=null)
+                {
+                    //изменение состояние
+                    slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
+                }
+                if (modbusTcp!=null)
+                {
+                    //изменение состояние
+                    modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
+                }
+
+
                 logger.Info("В регистр состояние" + slave.DataStore.HoldingRegisters[1]);
 
                 logger.Info("Получен серединный инфопакет");
@@ -443,8 +596,16 @@ namespace ModbusSyncStructLIb
                 cr16 = crc16.convertoshort(crc16bytes);
                 logger.Info("Сформирована контрольная сумма");
 
-                slave.DataStore.HoldingRegisters[1] = SlaveState.havechecktotime;
-                logger.Info("В регистр состояние готов принимать пакеты" + slave.DataStore.HoldingRegisters[1]);
+                if (slave!=null)
+                {
+                    slave.DataStore.HoldingRegisters[1] = SlaveState.havechecktotime;
+                    logger.Info("В регистр состояние готов принимать пакеты" + slave.DataStore.HoldingRegisters[1]);
+                }
+                if (modbusTcp!=null)
+                {
+                    modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havechecktotime;
+                    logger.Info("В регистр состояние готов принимать пакеты" + modbusTcp.DataStore.HoldingRegisters[1]);
+                }
 
             }
             catch (Exception ex)

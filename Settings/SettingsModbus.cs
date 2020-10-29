@@ -22,6 +22,15 @@ namespace ModbusSyncStructLIb.Settings
         public int ReadTimeout;
         public int WriteTimeout;
 
+        public string IP_client { get; set; }
+
+        public int port_IP_client { get; set; }
+
+        public int typeModbus { get; set; } 
+
+        public byte slaveID { get; set; }
+
+
         public SettingsModbus()
         {
             this.ComName = "COM1";
@@ -33,9 +42,13 @@ namespace ModbusSyncStructLIb.Settings
             this.StopBits_type_int = (int)StopBits.One;
             this.ReadTimeout = 1000;
             this.WriteTimeout = 1000;
+            IP_client = "127.0.0.1";
+            port_IP_client = 502;
+            typeModbus = 0;
+            slaveID = 1;
         }
 
-        public SettingsModbus(string ComName, int BoudRate, int DataBits, string Party_type, string StopBits_type, int ReadTimeout, int WriteTimeout)
+        public SettingsModbus(string ComName, int BoudRate, int DataBits, string Party_type, string StopBits_type, int ReadTimeout, int WriteTimeout,string IP_client,int port_IP_client,int typeModbus,byte slaveID)
         {
             this.ComName = ComName;
             this.BoudRate = BoudRate;
@@ -44,6 +57,10 @@ namespace ModbusSyncStructLIb.Settings
             this.StopBits_type_str = StopBits_type;
             this.ReadTimeout = ReadTimeout;
             this.WriteTimeout = WriteTimeout;
+            this.IP_client = IP_client;
+            this.port_IP_client = port_IP_client;
+            this.typeModbus = typeModbus;
+            this.slaveID = slaveID;
             /*
             typeParitylist.Add("None");
             typeParitylist.Add("Even");
@@ -55,8 +72,6 @@ namespace ModbusSyncStructLIb.Settings
             typeStopBitslist.Add("One");
             typeStopBitslist.Add("OnePointFive");
             typeStopBitslist.Add("Two");
-
-
             */
 
             switch (Party_type_str)
