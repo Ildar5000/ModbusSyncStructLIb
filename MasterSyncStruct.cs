@@ -214,6 +214,7 @@ namespace ModbusSyncStructLIb
 
                 if ((TypeModbus == 2))
                 {
+                    logger.Info("Создания modbus modbusIp");
                     TcpClient client = new TcpClient(IP_client, IP_client_port);
                     masterTCP = ModbusIpMaster.CreateIp(client);
                 }

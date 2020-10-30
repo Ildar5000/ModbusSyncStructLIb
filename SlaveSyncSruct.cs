@@ -234,12 +234,15 @@ namespace ModbusSyncStructLIb
                     
                     thread.Start();
 
+                    logger.Info("Slave подключен");
+
                     modbusTcp = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP);
 
                     modbusTcp.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                     modbusTcp.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
 
                     var listenTask=  modbusTcp.ListenAsync();
+                    logger.Info("Slave Ожидание");
                 }
                 
             }
@@ -516,18 +519,18 @@ namespace ModbusSyncStructLIb
                 {
                     //изменение состояние
                     slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
+                    logger.Info("В регистр состояние" + slave.DataStore.HoldingRegisters[1]);
+                    logger.Info("Получен серединный инфопакет");
+                    writebyte(receivedpacket);
                 }
                 if (modbusTcp!=null)
                 {
                     //изменение состояние
                     modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
-                }
-
-
-                logger.Info("В регистр состояние" + slave.DataStore.HoldingRegisters[1]);
-
-                logger.Info("Получен серединный инфопакет");
-                writebyte(receivedpacket);
+                    logger.Info("В регистр состояние" + modbusTcp.DataStore.HoldingRegisters[1]);
+                    logger.Info("Получен серединный инфопакет");
+                    writebyte(receivedpacket);
+                }    
             }
             catch (Exception ex)
             {
