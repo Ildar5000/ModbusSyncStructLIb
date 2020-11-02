@@ -575,7 +575,7 @@ namespace ModbusSyncStructLIb
         }
 
         /// <summary>
-        /// Десерелизация класса
+        /// Десерилизация класса
         /// </summary>
         private void Сlass_Deserialization(byte[] date)
         {
@@ -615,6 +615,7 @@ namespace ModbusSyncStructLIb
             catch (Exception ex)
             {
                 logger.Error(ex);
+                have_error_for_deseration();
                 Console.WriteLine(ex);
             }
         }
@@ -635,7 +636,42 @@ namespace ModbusSyncStructLIb
             }
             catch(Exception ex)
             {
+                have_error_for_deseration();
                 logger.Error(ex);
+            }
+        }
+
+        private void have_error_for_deseration()
+        {
+            if (slave != null)
+            {
+                slave.DataStore.HoldingRegisters[1] = SlaveState.haveerror;
+                logger.Error("Ошибка десеризация");
+
+                ///time reboot
+                Thread.Sleep(1000);
+                update_after_error();
+            }
+            if (modbusTcp != null)
+            {
+                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.haveerror;
+                logger.Error("Ошибка десеризация");
+                Thread.Sleep(1000);
+                update_after_error();
+            }
+        }
+
+        private void update_after_error()
+        {
+            if (slave != null)
+            {
+                slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                logger.Error("Востановление состояние");
+            }
+            if (modbusTcp != null)
+            {
+                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                logger.Error("Востановление состояние");
             }
         }
 

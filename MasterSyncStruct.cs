@@ -702,13 +702,23 @@ namespace ModbusSyncStructLIb
                     }
                     else  //В случае если не получено данные
                     {
+
                         //Console.WriteLine("Пакет не может передаться, связи с тем, что Slave занят");
                         logger.Warn("Пакет не может передаться, связи с тем, что Slave занят");
 
                         Thread.Sleep(1000);
                         
-                        count_try_recurs++;
-                        repeat_try_send(stream, count_try_recurs);
+                        if (status_slave==SlaveState.haveerror)
+                        {
+                            logger.Error("Пакет не может передаться, связи с тем, что Slave возникла ошибка. Передача отменена");
+                        }
+
+                        else
+                        {
+                            count_try_recurs++;
+                            repeat_try_send(stream, count_try_recurs);
+                        }
+                        
 
                     }
                 }
@@ -742,7 +752,7 @@ namespace ModbusSyncStructLIb
 
             send_single_message(sendCR16, coilAddress);
 
-            logger.Info("Ожидание ответа");
+            logger.Info("Отправка контрольной суммы");
 
             //Мастер свободен
             state_master = 0;
@@ -754,6 +764,27 @@ namespace ModbusSyncStructLIb
             //status_slave = SendRequestforAnyStatusSlave(5);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="coilAddress"></param>
+        /// <returns></returns>
+        public ushort read_single_message(ushort coilAddress)
+        {
+            ushort[] holding_register = { 0 };
+            if (TypeModbus == 2)
+            {
+                holding_register = masterTCP.ReadHoldingRegisters(slaveID, coilAddress, 0);
+            }
+            else
+            {
+                holding_register = master.ReadHoldingRegisters(slaveID, coilAddress, 0);
+            }
+            return holding_register[0];
+        }
+        
+        
+        
         /// <summary>
         /// Отправка данных
         /// </summary>

@@ -16,22 +16,34 @@ namespace ModbusSyncStructLIb.EvenBase
 
         public QueueOfSentMessagesForSlave()
         {
-
+            Thread thread = new Thread(recursve);
+            thread.Start();
         }
 
         public QueueOfSentMessagesForSlave(MasterSyncStruct m_master)
         {
             this.master = m_master;
+            Thread thread = new Thread(recursve);
+            thread.Start();
         }
 
-        //добавлен в очереди
+        /// <summary>
+        /// Очистка очереди
+        /// </summary>
+        public void clear_queue()
+        {
+            numbers.Clear();
+        }
+
+        /// <summary>
+        /// добавлен в очереди
+        /// </summary>
         public void add_queue(MemoryStream message)
         {
             numbers.Enqueue(message);
             count++;
-            Thread thread = new Thread(recursve);
-            thread.Start();
-        }
+
+        } 
 
         public void send()
         {
