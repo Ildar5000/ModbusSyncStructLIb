@@ -217,6 +217,10 @@ namespace ModbusSyncStructLIb
                     logger.Info("Создания modbus modbusIp");
                     TcpClient client = new TcpClient(IP_client, IP_client_port);
                     masterTCP = ModbusIpMaster.CreateIp(client);
+                    
+                    masterTCP.Transport.Retries = 1000;
+                    masterTCP.Transport.ReadTimeout = 1000;
+                    masterTCP.Transport.WriteTimeout = 1000;
                 }
             }
             catch(Exception ex)
@@ -461,9 +465,11 @@ namespace ModbusSyncStructLIb
             {
                 Console.WriteLine(ex);
                 logger.Error(ex);
-                master.Dispose();
-                close();
-                Open();
+                logger.Error("Не удалось отправить данные");
+                state_master = 1;
+                //master.Dispose();
+                //close();
+                //Open();
             }
             
 
@@ -535,6 +541,8 @@ namespace ModbusSyncStructLIb
             logger.Trace("Отправка данных");
 
             Console.WriteLine("Контрольная сумма");
+
+
 
             //если slave свободен то отправляем
             if (master != null)

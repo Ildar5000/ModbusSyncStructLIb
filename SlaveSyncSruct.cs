@@ -369,6 +369,9 @@ namespace ModbusSyncStructLIb
 
                         data_byte_for_processing = new byte[countDataStruct];
                         countDataStructUsshort = (countDataStruct / 2) + 1;
+
+                        //в случии если пакет прервался то обнуляем
+                        countrecivedcount = 0;
                     }
 
                     slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;

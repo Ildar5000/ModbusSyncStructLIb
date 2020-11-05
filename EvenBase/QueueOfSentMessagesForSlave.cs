@@ -67,6 +67,12 @@ namespace ModbusSyncStructLIb.EvenBase
                         master.send_multi_message(memory);
                         count--;
                     }
+                    //Случий с ошибкой на мастере
+                    if (master.state_master==1)
+                    {
+                        clear_queue();
+                        master.state_master = 0;
+                    }
                 }
             }
         }
