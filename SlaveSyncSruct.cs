@@ -43,6 +43,8 @@ namespace ModbusSyncStructLIb
         public delegate void SignalFormedMetaClassMethod(object struct_which_need_transfer);
         public event SignalFormedMetaClassMethod SignalFormedMetaClass;
 
+        public delegate void SignalFormedMetaClassMethodAll(MetaClassForStructandtherdata metaClassall);
+        public event SignalFormedMetaClassMethodAll SignalFormedMetaClassAll;
         #endregion
 
         /// <summary>
@@ -615,6 +617,8 @@ namespace ModbusSyncStructLIb
 
                 metaClass = (MetaClassForStructandtherdata)formatter.Deserialize(stream);
 
+
+                SignalFormedMetaClassAll?.Invoke(metaClass);
                 logger.Info("Сформирован мета-класс");
                 //После обработки статус меняется на свободный
                 SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);   // 2.Вызов события
