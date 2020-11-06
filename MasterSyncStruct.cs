@@ -74,55 +74,65 @@ namespace ModbusSyncStructLIb
 
                     logger.Info("Объект десериализован");
                 }
-
-                serialPort = new SerialPort(settings.ComName);
-                serialPort.BaudRate = settings.BoudRate;
-                serialPort.DataBits = settings.DataBits;
-
-                switch (settings.Party_type_str)
-                {
-                    case "Space":
-                        serialPort.Parity = Parity.Space;
-                        break;
-                    case "Even":
-                        serialPort.Parity = Parity.Even;
-                        break;
-                    case "Mark":
-                        serialPort.Parity = Parity.Mark;
-                        break;
-                    case "Odd":
-                        serialPort.Parity = Parity.Odd;
-                        break;
-                    default:
-                        //none
-                        serialPort.Parity = Parity.None;
-                        break;
-                }
-
-
-                switch (settings.StopBits_type_str)
-                {
-                    case "One":
-                        serialPort.StopBits = StopBits.One;
-                        break;
-                    case "OnePointFive":
-                        serialPort.StopBits = StopBits.OnePointFive;
-                        break;
-                    case "Two":
-                        serialPort.StopBits = StopBits.Two;
-                        break;
-                    default:
-                        //none
-                        serialPort.StopBits = StopBits.None;
-                        break;
-                }
-
-                serialPort.ReadTimeout = settings.ReadTimeout;
-                serialPort.WriteTimeout = settings.WriteTimeout;
-                IP_client = settings.IP_client;
-                IP_client_port = settings.port_IP_client;
-                slaveID = settings.slaveID;
                 TypeModbus = settings.typeModbus;
+
+                if (settings.typeModbus != 2)
+                {
+                    serialPort = new SerialPort(settings.ComName);
+                    serialPort.BaudRate = settings.BoudRate;
+                    serialPort.DataBits = settings.DataBits;
+
+                    switch (settings.Party_type_str)
+                    {
+                        case "Space":
+                            serialPort.Parity = Parity.Space;
+                            break;
+                        case "Even":
+                            serialPort.Parity = Parity.Even;
+                            break;
+                        case "Mark":
+                            serialPort.Parity = Parity.Mark;
+                            break;
+                        case "Odd":
+                            serialPort.Parity = Parity.Odd;
+                            break;
+                        default:
+                            //none
+                            serialPort.Parity = Parity.None;
+                            break;
+                    }
+
+
+                    switch (settings.StopBits_type_str)
+                    {
+                        case "One":
+                            serialPort.StopBits = StopBits.One;
+                            break;
+                        case "OnePointFive":
+                            serialPort.StopBits = StopBits.OnePointFive;
+                            break;
+                        case "Two":
+                            serialPort.StopBits = StopBits.Two;
+                            break;
+                        default:
+                            //none
+                            serialPort.StopBits = StopBits.None;
+                            break;
+                    }
+
+                    serialPort.ReadTimeout = settings.ReadTimeout;
+                    serialPort.WriteTimeout = settings.WriteTimeout;
+
+
+                    slaveID = settings.slaveID;
+                }
+                if (settings.typeModbus == 2)
+                {
+
+                    IP_client = settings.IP_client;
+                    IP_client_port = settings.port_IP_client;
+                    slaveID = settings.slaveID;
+                }
 
 
             }
@@ -174,11 +184,11 @@ namespace ModbusSyncStructLIb
         {
             try
             {
-                serialPort.Open();
-                SerialPortAdapter = new SerialPortAdapter(serialPort);
-
                 if (TypeModbus==0)
                 {
+                    serialPort.Open();
+                    SerialPortAdapter = new SerialPortAdapter(serialPort);
+
                     logger.Info("Создания modbus RTU");
                     master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
                     
@@ -196,6 +206,9 @@ namespace ModbusSyncStructLIb
 
                 if (TypeModbus == 1)
                 {
+                    serialPort.Open();
+                    SerialPortAdapter = new SerialPortAdapter(serialPort);
+
                     logger.Info("Создания modbus Ascii");
                     master = ModbusSerialMaster.CreateAscii(SerialPortAdapter);
                     
