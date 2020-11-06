@@ -201,6 +201,10 @@ namespace ModbusSyncStructLIb
                     ushort startAddress = 1;
                     ushort numOfPoints = 10;
                     ushort[] holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+
+                    var transport = master.Transport;
+                    
+
                     Console.WriteLine(holding_register);
                 }
 
@@ -263,7 +267,25 @@ namespace ModbusSyncStructLIb
 
         public void close()
         {
-            serialPort.Close();
+            try
+            {
+                if (masterTCP != null)
+                {
+
+                    masterTCP.Dispose();
+                }
+
+                if (master != null)
+                {
+                    master.Dispose();
+                    serialPort.Close();
+                }
+            }
+            
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         /// <summary>

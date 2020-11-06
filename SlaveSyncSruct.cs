@@ -254,8 +254,9 @@ namespace ModbusSyncStructLIb
                     modbusTcp.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                     modbusTcp.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
 
-                    var listenTask=  modbusTcp.ListenAsync();
+                    Task listenTask=  modbusTcp.ListenAsync();
                     logger.Info("Slave Ожидание");
+                  
                 }
                 
             }
@@ -270,8 +271,18 @@ namespace ModbusSyncStructLIb
 
         public void close()
         {
-            logger.Warn("Закрытие Slave");
-            serialPort.Close();
+            if (modbusTcp!=null)
+            {
+                logger.Warn("Закрытие Slave");
+                modbusTcp.Dispose();
+            }
+            if (slave!=null)
+            {
+                
+                slave.Dispose();
+                logger.Warn("Закрытие Slave");
+                serialPort.Close();
+            }
         }
       
         private void Modbus_DataStoreWriteTo(object sender, Modbus.Data.DataStoreEventArgs e)

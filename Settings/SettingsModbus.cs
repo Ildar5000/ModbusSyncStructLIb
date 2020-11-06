@@ -32,6 +32,7 @@ namespace ModbusSyncStructLIb.Settings
 
         public byte slaveID { get; set; }
 
+        public int defaulttypemodbus { get; set; }
 
         public SettingsModbus()
         {
@@ -116,5 +117,73 @@ namespace ModbusSyncStructLIb.Settings
             }
 
         }
+
+        public SettingsModbus(string ComName, int BoudRate, int DataBits, string Party_type, string StopBits_type, int ReadTimeout, int WriteTimeout, string IP_client, int port_IP_client, int typeModbus, byte slaveID, string typeModbusSTR,int defaulttypemodbus)
+        {
+            this.ComName = ComName;
+            this.BoudRate = BoudRate;
+            this.DataBits = DataBits;
+            this.Party_type_str = Party_type;
+            this.StopBits_type_str = StopBits_type;
+            this.ReadTimeout = ReadTimeout;
+            this.WriteTimeout = WriteTimeout;
+            this.IP_client = IP_client;
+            this.port_IP_client = port_IP_client;
+            this.typeModbus = typeModbus;
+            this.typeModbusSTR = typeModbusSTR;
+            this.slaveID = slaveID;
+            this.defaulttypemodbus = defaulttypemodbus;
+            /*
+            typeParitylist.Add("None");
+            typeParitylist.Add("Even");
+            typeParitylist.Add("Mark");
+            typeParitylist.Add("Odd");
+            typeParitylist.Add("Space");
+
+            typeStopBitslist.Add("None");
+            typeStopBitslist.Add("One");
+            typeStopBitslist.Add("OnePointFive");
+            typeStopBitslist.Add("Two");
+            */
+
+            switch (Party_type_str)
+            {
+                case "Space":
+                    Party_type_int = (int)Parity.Space;
+                    break;
+                case "Even":
+                    Party_type_int = (int)Parity.Even;
+                    break;
+                case "Mark":
+                    Party_type_int = (int)Parity.Mark;
+                    break;
+                case "Odd":
+                    Party_type_int = (int)Parity.Odd;
+                    break;
+                default:
+                    //none
+                    Party_type_int = (int)Parity.None;
+                    break;
+            }
+
+            switch (StopBits_type_str)
+            {
+                case "One":
+                    Party_type_int = (int)StopBits.One;
+                    break;
+                case "OnePointFive":
+                    Party_type_int = (int)StopBits.OnePointFive;
+                    break;
+                case "Two":
+                    Party_type_int = (int)StopBits.Two;
+                    break;
+                default:
+                    //none
+                    Party_type_int = (int)StopBits.None;
+                    break;
+            }
+
+        }
+
     }
 }
