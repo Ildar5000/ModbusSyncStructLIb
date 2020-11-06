@@ -26,7 +26,9 @@ namespace ModbusSyncStructLIb.Settings
 
         public int port_IP_client { get; set; }
 
-        public int typeModbus { get; set; } 
+        public int typeModbus { get; set; }
+
+        public string typeModbusSTR { get; set; }
 
         public byte slaveID { get; set; }
 
@@ -48,7 +50,7 @@ namespace ModbusSyncStructLIb.Settings
             slaveID = 1;
         }
 
-        public SettingsModbus(string ComName, int BoudRate, int DataBits, string Party_type, string StopBits_type, int ReadTimeout, int WriteTimeout,string IP_client,int port_IP_client,int typeModbus,byte slaveID)
+        public SettingsModbus(string ComName, int BoudRate, int DataBits, string Party_type, string StopBits_type, int ReadTimeout, int WriteTimeout,string IP_client,int port_IP_client,int typeModbus,byte slaveID, string typeModbusSTR)
         {
             this.ComName = ComName;
             this.BoudRate = BoudRate;
@@ -60,7 +62,9 @@ namespace ModbusSyncStructLIb.Settings
             this.IP_client = IP_client;
             this.port_IP_client = port_IP_client;
             this.typeModbus = typeModbus;
+            this.typeModbusSTR = typeModbusSTR;
             this.slaveID = slaveID;
+
             /*
             typeParitylist.Add("None");
             typeParitylist.Add("Even");
