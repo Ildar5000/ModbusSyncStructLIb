@@ -57,8 +57,19 @@ namespace ModbusSyncStructLIb.EvenBase
 
         public void stoptransfer()
         {
-            master.stoptransfer();
-            clear_queue();
+            try
+            {
+                if (master!=null)
+                {
+                    master.stoptransfer();
+                    clear_queue();
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
+            
             
         }
 

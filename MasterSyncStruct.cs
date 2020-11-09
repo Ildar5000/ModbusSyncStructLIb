@@ -254,6 +254,12 @@ namespace ModbusSyncStructLIb
 
         #endregion
 
+        /// <summary>
+        /// Статус процесса
+        /// </summary>
+        public int status_bar = 0;
+
+
         public void close()
         {
             try
@@ -369,6 +375,7 @@ namespace ModbusSyncStructLIb
         //Отправка метопакета с кол-во бит в объекте
         public void Sendpaketwithcountbytes(int count)
         {
+            status_bar = 18;
             ushort coilAddress = TableUsedforRegisters.SendDate;
             //ushort sentpacket = Convert.ToUInt16(count);
             //ushort sentpacket_second = Convert.ToUInt16(count);
@@ -381,13 +388,14 @@ namespace ModbusSyncStructLIb
 
                     sentpacket_second1[0] = (ushort)count;
                     sentpacket_second1[1] = (ushort)(count >> 16);
-
+                    status_bar = 20;
                     sendbigdataformaster(coilAddress, sentpacket_second1);
 
                 }
                 else
                 {
                     ushort sentpacket = Convert.ToUInt16(count);
+                    status_bar = 20;
                     senddataformaster(coilAddress, sentpacket);
                 }
             }
@@ -455,6 +463,7 @@ namespace ModbusSyncStructLIb
         /// </summary>
         public void send_multi_message(MemoryStream stream)
         {
+            status_bar = 0;
             stoptransfer_signal = false;
             logger.Info("Изменения структуры и подготовка к передачи");
             //Мастер занят
@@ -475,11 +484,13 @@ namespace ModbusSyncStructLIb
             //write_console(date);
             //Console.WriteLine("");
             //конвертирует в ushort
-
+            status_bar = 10;
+            
             logger.Info("Преобразование в ushort:Начато");
             Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);
             logger.Info("Преобразование в ushort:закончено");
-
+            
+            status_bar = 15;
 
             //write_console(date_modbus);
 
@@ -538,6 +549,7 @@ namespace ModbusSyncStructLIb
                         {
                             masterTCP.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
                         }
+                        status_bar = 100;
                     }
 
                 }
@@ -584,10 +596,12 @@ namespace ModbusSyncStructLIb
             //Console.WriteLine("Будет отправлено " + countneedsend + " пакетов");
             logger.Info("Будет отправлено " + countneedsend + " пакетов");
 
+            int status_bar_temp = 80 / countneedsend;
+
             //кол-во отправок
             for (int i = 0; i < countneedsend; i++)
             {
-
+                
                 //если пользователь отменил передачу
                 if (stoptransfer_signal == true)
                 {
@@ -608,10 +622,12 @@ namespace ModbusSyncStructLIb
                     //окончание передачи
                     if (countneedsend - 1 == i)
                     {
+                        status_bar += status_bar_temp;
                         end_trasfer_send(i, k, coilAddress, count_send_packet, date_modbus, sentpacket, date);
                     }
                     else
                     {
+                        status_bar += status_bar_temp;
                         other_trasfer_send(i, k, coilAddress, count_send_packet, date_modbus, sentpacket, date);
                     }
                 }
@@ -674,7 +690,7 @@ namespace ModbusSyncStructLIb
 
             //Отправка контрольной суммы
             send_cr16_message(controlsum16);
-
+            status_bar = 100;
             Console.WriteLine("Cформирован и передан");
         }
 

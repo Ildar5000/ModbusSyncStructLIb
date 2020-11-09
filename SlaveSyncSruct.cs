@@ -35,6 +35,10 @@ namespace ModbusSyncStructLIb
         public ModbusTcpSlave modbusTcp;
         public TcpListener ListenerTCP;
 
+        public int status_bar=0;
+        int statusbar_value_repeat = 0;
+
+
         int TypeModbus=0;
 
         private static Logger logger;
@@ -295,6 +299,7 @@ namespace ModbusSyncStructLIb
                     //запросы состояния
                     if (e.Data.B.Count == 1)
                     {
+                        status_bar = 0;
                         if (slave != null)
                         {
                             if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
@@ -359,6 +364,7 @@ namespace ModbusSyncStructLIb
 
                     if (e.Data.B.Count > 2)
                     {
+                        status_bar = 10;
                         if (modbusTcp != null)
                         {
                             //Console.WriteLine("Пришел пакет с данными:");
@@ -602,6 +608,9 @@ namespace ModbusSyncStructLIb
 
             countrecivedcount += receivedpacket.Length;
             Console.WriteLine("Получено:" + countDataStructUsshort);
+
+            statusbar_value_repeat = 100 / (countDataStruct+2);
+
             if (countrecivedcount > countDataStruct)
             {
                 processing_infopaket_endl();
@@ -610,11 +619,14 @@ namespace ModbusSyncStructLIb
             if (countrecivedcount == receivedpacket.Length)
             {
                 processing_infopaket_inception();
+
+                status_bar += statusbar_value_repeat;
             }
 
             if (countrecivedcount > receivedpacket.Length && countrecivedcount < countDataStruct)
             {
                 processing_infopaket_middle();
+                status_bar += statusbar_value_repeat;
             }
             Console.WriteLine("Переданно " + countrecivedcount);
         }
@@ -717,6 +729,7 @@ namespace ModbusSyncStructLIb
 
                 //собираем класс
                 Console.WriteLine("Архив и десерелизация объекта");
+
                 //Сlass_Deserialization(data_byte_for_processing);
                 Archive_Code(data_byte_for_processing);
 
@@ -780,6 +793,8 @@ namespace ModbusSyncStructLIb
                     logger.Info("В регистр состояние готов принимать пакеты" + modbusTcp.DataStore.HoldingRegisters[1]);
                 }
 
+                status_bar = 100;
+
             }
             catch (Exception ex)
             {
@@ -802,6 +817,7 @@ namespace ModbusSyncStructLIb
 
                 
                 logger.Info("Формирование класса:");
+                status_bar = 90;
                 Сlass_Deserialization(class_outdecompress);
             }
             catch(Exception ex)
