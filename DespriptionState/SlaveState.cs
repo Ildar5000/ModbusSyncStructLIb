@@ -16,6 +16,8 @@ namespace ModbusSyncStructLIb.DespriptionState
         public const int havetimetransfer = 5;
         public const int havechecktotimeOK = 6;
 
+        public const int haveusercanceltransfer = 10;
+
         public SlaveState()
         {
 

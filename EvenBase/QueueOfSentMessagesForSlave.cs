@@ -55,6 +55,14 @@ namespace ModbusSyncStructLIb.EvenBase
             }
         }
 
+        public void stoptransfer()
+        {
+            master.stoptransfer();
+            clear_queue();
+            
+        }
+
+
         public void recursve()
         {
             while(true)

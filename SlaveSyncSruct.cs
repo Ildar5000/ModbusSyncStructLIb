@@ -297,23 +297,46 @@ namespace ModbusSyncStructLIb
                     {
                         if (slave != null)
                         {
-                            logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
-                            slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+                            if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
+                            {
+                                logger.Info("Перешел в состояние " + e.Data.B[0] + " Отмена");
+                                slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
 
-                            processing_singleregx(e.Data.B[0]);
-                            //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
-                            logger.Info("Пришла команда на обработку" + e.Data.B[0]);
+                                processing_singleregx(e.Data.B[0]);
+                                //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                            }
+                            else
+                            {
+                                logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
+                                slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+
+                                processing_singleregx(e.Data.B[0]);
+                                //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                                logger.Info("Пришла команда на обработку" + e.Data.B[0]);
+                            }
+                            
                         }
 
                         if (modbusTcp != null)
                         {
-                            logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
-                            modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+                            if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
+                            {
+                                logger.Info("Перешел в состояние " + e.Data.B[0] + " отмена");
+                                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
 
-                            processing_singleregx(e.Data.B[0]);
-                            //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
-                            logger.Info("Пришла команда на обработку" + e.Data.B[0]);
+                                processing_singleregx(e.Data.B[0]);
+                            }
+                            else
+                            {
+                                logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
+                                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+
+                                processing_singleregx(e.Data.B[0]);
+                                //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                                logger.Info("Пришла команда на обработку" + e.Data.B[0]);
+                            }
                         }
+
 
                     }
 
@@ -401,6 +424,12 @@ namespace ModbusSyncStructLIb
         {
             if (slave!=null)
             {
+                if (slave.DataStore.HoldingRegisters[1] == SlaveState.haveusercanceltransfer)
+                {
+                    logger.Info("Пользователь отменил посылку");
+                    update_after_error();
+                }
+
                 if (slave.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
                 {
                     logger.Info("Состояние slave" + slave.DataStore.HoldingRegisters[1]);
@@ -447,6 +476,12 @@ namespace ModbusSyncStructLIb
             }
             if (modbusTcp!=null)
             {
+                if (modbusTcp.DataStore.HoldingRegisters[1] == SlaveState.haveusercanceltransfer)
+                {
+                    logger.Info("Пользователь отменил посылку");
+                    update_after_error();
+                }
+
                 if (modbusTcp.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
                 {
                     logger.Info("Состояние slave" + modbusTcp.DataStore.HoldingRegisters[1]);

@@ -53,8 +53,12 @@ namespace ModbusSyncStructLIb
 
         int TypeModbus=0;
 
+        public bool stoptransfer_signal = false;
+
         string IP_client;
         int IP_client_port = 502;
+
+        #region init
 
         public MasterSyncStruct()
         {
@@ -248,22 +252,7 @@ namespace ModbusSyncStructLIb
             
         }
 
-        public ushort[] readHolding()
-        {
-            ushort startAddress = 1;
-            ushort numOfPoints = 10;
-            ushort[] holding_register = {0};
-            if (TypeModbus==2)
-            {
-                holding_register = masterTCP.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
-            }
-            else
-            {
-                holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
-            }
-
-            return holding_register;
-        }
+        #endregion
 
         public void close()
         {
@@ -281,12 +270,32 @@ namespace ModbusSyncStructLIb
                     serialPort.Close();
                 }
             }
-            
-            catch(Exception ex)
+
+            catch (Exception ex)
             {
                 Console.WriteLine(ex);
             }
         }
+
+
+        public ushort[] readHolding()
+        {
+            ushort startAddress = 1;
+            ushort numOfPoints = 10;
+            ushort[] holding_register = {0};
+            if (TypeModbus==2)
+            {
+                holding_register = masterTCP.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+            }
+            else
+            {
+                holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+            }
+
+            return holding_register;
+        }
+
+        
 
         /// <summary>
         /// чтение статусе у Slave
@@ -354,22 +363,20 @@ namespace ModbusSyncStructLIb
             }
         }
 
+        #region отправка инфо о кол-во бит
+
+
         //Отправка метопакета с кол-во бит в объекте
         public void Sendpaketwithcountbytes(int count)
         {
             ushort coilAddress = TableUsedforRegisters.SendDate;
             //ushort sentpacket = Convert.ToUInt16(count);
             //ushort sentpacket_second = Convert.ToUInt16(count);
-            ushort sentpacket = 0;
-            ushort sentpacket_second = 0;
 
             if (count<2097152)
             {
                 if (count > 60000)
                 {
-                    int count_repeat = count / 60000 ;
-                    int count_value = 60000;
-                    int count_all = count;
                     ushort[] sentpacket_second1 = new ushort[2];
 
                     sentpacket_second1[0] = (ushort)count;
@@ -380,7 +387,7 @@ namespace ModbusSyncStructLIb
                 }
                 else
                 {
-                    sentpacket = Convert.ToUInt16(count);
+                    ushort sentpacket = Convert.ToUInt16(count);
                     senddataformaster(coilAddress, sentpacket);
                 }
             }
@@ -421,7 +428,7 @@ namespace ModbusSyncStructLIb
                 masterTCP.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
             }
         }
-
+        #endregion
 
         public void write_console(byte[] date)
         {
@@ -448,6 +455,7 @@ namespace ModbusSyncStructLIb
         /// </summary>
         public void send_multi_message(MemoryStream stream)
         {
+            stoptransfer_signal = false;
             logger.Info("Изменения структуры и подготовка к передачи");
             //Мастер занят
             state_master = 1;
@@ -579,6 +587,17 @@ namespace ModbusSyncStructLIb
             //кол-во отправок
             for (int i = 0; i < countneedsend; i++)
             {
+
+                //если пользователь отменил передачу
+                if (stoptransfer_signal == true)
+                {
+                    logger.Info("Пользователь отменил передачу");
+
+                    send_single_message(SlaveState.haveusercanceltransfer, TableUsedforRegisters.SlaveId);
+                    return;
+                }
+
+
                 //lonsole.WriteLine("Отправляем запрос о статусе");
                 logger.Info("Отправляем запрос о статусе");
 
@@ -712,6 +731,13 @@ namespace ModbusSyncStructLIb
         /// <param name="count">кол-во попыток</param>
         public void repeat_try_send(MemoryStream stream,int count_try_recurs)
         {
+            //если пользователь отменил передачу
+            if (stoptransfer_signal == true)
+            {
+                logger.Info("Пользователь отменил передачу");
+                return;
+            }
+
             if (count_try_recurs != 3)
             {
                 logger.Info("Попытка передачи " + count_try_recurs);
@@ -875,9 +901,14 @@ namespace ModbusSyncStructLIb
             }
             return holding_register[0];
         }
-        
-        
-        
+
+        public void stoptransfer()
+        {
+            stoptransfer_signal = true;
+        }
+
+
+
         /// <summary>
         /// Отправка данных
         /// </summary>
