@@ -18,8 +18,19 @@ namespace ModbusSyncStructLIb
         public int type_archv { get; set; }
 
         public string name_file { get; set; }
-        
-        //public object metattributes { get; set; }
+
+        #region metaatributesdfiles
+
+        public object metattributes { get; set; }
+
+        public DateTime CreationTime_file { get; set; }
+
+        public DateTime LastWriteTime { get; set; }
+
+        #endregion
+
+
+
 
         public MetaClassForStructandtherdata(string txt)
         {
@@ -42,7 +53,7 @@ namespace ModbusSyncStructLIb
             dateTime = DateTime.Now;
         }
 
-        public MetaClassForStructandtherdata(object txt,bool is_file, string name_file)
+        public MetaClassForStructandtherdata(object txt,bool is_file, string name_file,object metattributes,DateTime CreationTime_file,DateTime LastWriteTime)
         {
             struct_which_need_transfer = txt;
             if (txt.GetType() != null)
@@ -52,7 +63,11 @@ namespace ModbusSyncStructLIb
             dateTime = DateTime.Now;
             this.this_is_file = is_file;
             this.name_file = name_file;
-            //this.metattributes = metattributes;
+
+            this.metattributes = metattributes;
+            this.CreationTime_file = CreationTime_file;
+            this.LastWriteTime = LastWriteTime;
+
         }
 
         public MetaClassForStructandtherdata()
