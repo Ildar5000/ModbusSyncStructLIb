@@ -336,8 +336,6 @@ namespace ModbusSyncStructLIb
                                 logger.Info("Пришла команда на обработку" + e.Data.B[0]);
                             }
                         }
-
-
                     }
 
                     if (e.Data.B.Count == 2)
@@ -349,7 +347,6 @@ namespace ModbusSyncStructLIb
                             //Console.Write(receive_packet_data[i] + " ");
                         }
 
-
                         if (slave != null)
                         {
                             processing_tworegx(tworex);
@@ -358,12 +355,10 @@ namespace ModbusSyncStructLIb
                         {
                             processing_tworegx(tworex);
                         }
-
                     }    
 
                     if (e.Data.B.Count > 2)
                     {
-
                         if (modbusTcp != null)
                         {
                             //Console.WriteLine("Пришел пакет с данными:");
@@ -589,12 +584,8 @@ namespace ModbusSyncStructLIb
                     //в случии если пакет прервался то обнуляем
                     countrecivedcount = 0;
                 }
-
                 modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                 logger.Info("Slave перешел в состоянии передача" + modbusTcp.DataStore.HoldingRegisters[1]);
-
-
-
             }
         }
 
