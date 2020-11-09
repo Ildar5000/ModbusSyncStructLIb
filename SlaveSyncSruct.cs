@@ -84,6 +84,9 @@ namespace ModbusSyncStructLIb
         string IP_client;
         int IP_client_port = 502;
 
+        double check_deltatime = 0;
+
+
         public SlaveSyncSruct()
         {
 
@@ -111,6 +114,7 @@ namespace ModbusSyncStructLIb
                     serialPort.BaudRate = settings.BoudRate;
                     serialPort.DataBits = settings.DataBits;
                     serialPort.Parity = (Parity)settings.Party_type_int;
+                    check_deltatime = settings.deltatime;
 
                     switch (settings.Party_type_str)
                     {
@@ -155,7 +159,7 @@ namespace ModbusSyncStructLIb
 
                     serialPort.ReadTimeout = settings.ReadTimeout;
                     serialPort.WriteTimeout = settings.WriteTimeout;
-
+                    check_deltatime = settings.deltatime;
                     slaveID = settings.slaveID;
                 }
 
@@ -164,6 +168,7 @@ namespace ModbusSyncStructLIb
                     IP_client = settings.IP_client;
                     IP_client_port = settings.port_IP_client;
                     slaveID = settings.slaveID;
+                    check_deltatime = settings.deltatime;
                 }
 
             }
@@ -751,27 +756,32 @@ namespace ModbusSyncStructLIb
         private void Сlass_Deserialization(byte[] date)
         {
             try
-            {
-                
+            {            
                 logger.Info("Формирование класса:");
 
                 Stream stream = new MemoryStream(date);
                 BinaryFormatter formatter = new BinaryFormatter();
-                
 
                 metaClass = (MetaClassForStructandtherdata)formatter.Deserialize(stream);
                 
-
-                
-
                 logger.Info("Сформирован мета-класс");
                 //После обработки статус меняется на свободный
-                SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);   // 2.Вызов события
+
+                DateTime dataNowSlave = DateTime.Now;
+
+                if (dataNowSlave.CompareTo(metaClass.dateTime)<= check_deltatime)
+                {
+                    SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);   // 2.Вызов события
+                }
+                else
+                {
+                    logger.Warn("Данные не актуальные, уточните дельту или данные пришло поздно");
+                }
+                
                 if (check_metaclassobj(metaClass))
                 {
                     SignalFormedMetaClassAll?.Invoke(metaClass);
                 }
-                
                 
                 logger.Info("Вызвано события на изменения");
 
@@ -799,7 +809,7 @@ namespace ModbusSyncStructLIb
             catch (Exception ex)
             {
                 logger.Error(ex);
-                have_error_for_deseration();
+                //have_error_for_deseration();
                 Console.WriteLine(ex);
             }
         }
@@ -819,10 +829,11 @@ namespace ModbusSyncStructLIb
                 logger.Info("Формирование класса:");
                 status_bar = 90;
                 Сlass_Deserialization(class_outdecompress);
+                return;
             }
             catch(Exception ex)
             {
-                have_error_for_deseration();
+                //have_error_for_deseration();
                 logger.Error(ex);
             }
         }
