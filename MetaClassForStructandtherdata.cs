@@ -18,6 +18,9 @@ namespace ModbusSyncStructLIb
         public int type_archv { get; set; }
 
         public string name_file { get; set; }
+        
+        //public object metattributes { get; set; }
+
         public MetaClassForStructandtherdata(string txt)
         {
             struct_which_need_transfer = txt;
@@ -33,6 +36,9 @@ namespace ModbusSyncStructLIb
             {
                 type = txt.GetType();
             }
+            else
+            {
+            }
             dateTime = DateTime.Now;
         }
 
@@ -46,6 +52,7 @@ namespace ModbusSyncStructLIb
             dateTime = DateTime.Now;
             this.this_is_file = is_file;
             this.name_file = name_file;
+            //this.metattributes = metattributes;
         }
 
         public MetaClassForStructandtherdata()

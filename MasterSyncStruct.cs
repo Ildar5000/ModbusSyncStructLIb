@@ -357,10 +357,47 @@ namespace ModbusSyncStructLIb
         //Отправка метопакета с кол-во бит в объекте
         public void Sendpaketwithcountbytes(int count)
         {
-            ushort coilAddress = 2;
+            ushort coilAddress = TableUsedforRegisters.SendDate;
+            //ushort sentpacket = Convert.ToUInt16(count);
+            //ushort sentpacket_second = Convert.ToUInt16(count);
+            ushort sentpacket = 0;
+            ushort sentpacket_second = 0;
 
-            ushort sentpacket = Convert.ToUInt16(count);
+            if (count<2097152)
+            {
+                if (count > 60000)
+                {
+                    int count_repeat = count / 60000 ;
+                    int count_value = 60000;
+                    int count_all = count;
+                    ushort[] sentpacket_second1 = new ushort[2];
 
+                    sentpacket_second1[0] = (ushort)count;
+                    sentpacket_second1[1] = (ushort)(count >> 16);
+
+                    sendbigdataformaster(coilAddress, sentpacket_second1);
+
+                }
+                else
+                {
+                    sentpacket = Convert.ToUInt16(count);
+                    senddataformaster(coilAddress, sentpacket);
+                }
+            }
+            else
+            {
+                logger.Warn("Слишком большой файл");
+            }
+
+         
+        }
+        /// <summary>
+        /// Отправить данные
+        /// </summary>
+        /// <param name="coilAddress">с какого начинаетс</param>
+        /// <param name="sentpacket">кол-во байт</param>
+        private void senddataformaster(ushort coilAddress,ushort sentpacket)
+        {
             if (master != null)
             {
                 master.WriteSingleRegister(slaveID, coilAddress, sentpacket);
@@ -369,7 +406,20 @@ namespace ModbusSyncStructLIb
             if (masterTCP != null)
             {
                 masterTCP.WriteSingleRegister(slaveID, coilAddress, sentpacket);
-            }           
+            }
+        }
+
+        private void sendbigdataformaster(ushort coilAddress, ushort[] sentpacket)
+        {
+            if (master != null)
+            {
+                master.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
+            }
+
+            if (masterTCP != null)
+            {
+                masterTCP.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
+            }
         }
 
 
@@ -414,8 +464,8 @@ namespace ModbusSyncStructLIb
             
             ushort[] sentpacket = new ushort[count_send_packet];
 
-            write_console(date);
-            Console.WriteLine("");
+            //write_console(date);
+            //Console.WriteLine("");
             //конвертирует в ushort
 
             logger.Info("Преобразование в ushort:Начато");
@@ -423,7 +473,7 @@ namespace ModbusSyncStructLIb
             logger.Info("Преобразование в ushort:закончено");
 
 
-            write_console(date_modbus);
+            //write_console(date_modbus);
 
             byte[] date_unpack = new byte[date.Length];
 
@@ -480,9 +530,6 @@ namespace ModbusSyncStructLIb
                         {
                             masterTCP.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
                         }
-
-
-                        
                     }
 
                 }
@@ -570,7 +617,9 @@ namespace ModbusSyncStructLIb
             }
             //Console.WriteLine("Отправка данных");
             logger.Trace("Отправка данных");
-            write_console(sentpacket);
+
+            //write_console(sentpacket);
+
             k = 0;
             //Console.WriteLine("Отправка данных");
             logger.Trace("Отправка данных");
@@ -681,8 +730,9 @@ namespace ModbusSyncStructLIb
 
                 ushort[] sentpacket = new ushort[count_send_packet];
 
-                write_console(date);
-                Console.WriteLine("");
+                //write_console(date);
+                //Console.WriteLine("");
+
                 //конвертирует в ushort
 
                 logger.Info("Преобразование в ushort: Начато");
@@ -690,7 +740,7 @@ namespace ModbusSyncStructLIb
                 logger.Info("Преобразование в ushort: Закончено");
 
 
-                write_console(date_modbus);
+                //write_console(date_modbus);
 
                 byte[] date_unpack = new byte[date.Length];
 

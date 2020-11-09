@@ -24,6 +24,7 @@ namespace ModbusSyncStructLIb.DespriptionState
         /// </summary>
         public const byte SendDate = 2;
 
+        public const byte SendSecondDate = 3;
         /// <summary>
         /// Контрольная сумма
         /// </summary>
