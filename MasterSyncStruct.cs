@@ -27,7 +27,7 @@ namespace ModbusSyncStructLIb
 {
     public class MasterSyncStruct
     {
-        #region modbus
+        #region modbus serial
         SerialPort serialPort;
         SerialPortAdapter SerialPortAdapter;
         ModbusIpMaster masterTCP;
@@ -35,6 +35,13 @@ namespace ModbusSyncStructLIb
         ModbusSerialMaster master;
         #endregion
 
+        #region modbus tcp
+        string IP_client;
+        int IP_client_port = 502;
+        #endregion
+
+        //Common settings
+        int TypeModbus = 0;
         public byte slaveID=1;
         
         #region setting
@@ -45,18 +52,26 @@ namespace ModbusSyncStructLIb
         /// Состояние master
         /// </summary>
         public int state_master = 0;
-
-
-        private static Logger logger;
-        ushort status_slave;
         Crc16 crc16;
+        ushort status_slave;
 
-        int TypeModbus=0;
+        //log
+        private static Logger logger;
 
+        /// <summary>
+        /// Статус отмены пользователем
+        /// </summary>
         public bool stoptransfer_signal = false;
 
-        string IP_client;
-        int IP_client_port = 502;
+        /// <summary>
+        /// Измерение временени в тиках
+        /// </summary>
+        public long ellapledTicks = DateTime.Now.Ticks;
+
+        public TimeSpan elapsedSpan;
+
+
+
 
         #region init
 
@@ -310,7 +325,7 @@ namespace ModbusSyncStructLIb
 
         public ushort SendRequestforStatusSlave()
         {
-            ushort startAddress = 1;
+            ushort startAddress = TableUsedforRegisters.StateSlaveRegisters;
             ushort numOfPoints = 1;
             ushort[] status_slave = {0};
 
@@ -505,6 +520,8 @@ namespace ModbusSyncStructLIb
 
             try
             {
+                ellapledTicks = DateTime.Now.Ticks;
+
                 logger.Info("Запрос о получении статуса");
                 status_slave = SendRequestforStatusSlave();
                 logger.Info("Cтатус Slave " + status_slave);
@@ -522,8 +539,10 @@ namespace ModbusSyncStructLIb
                     logger.Info("Статус свободен:");
                     logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
                     logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
-
+                    
+                    ellapledTicks = DateTime.Now.Ticks;
                     //если данные больше чем переданных
+                    
                     if (date_modbus.Length > count_send_packet)
                     {
                         morethantransfer(coilAddress,date_modbus, count_send_packet,sentpacket,date);
@@ -551,6 +570,10 @@ namespace ModbusSyncStructLIb
                         }
                         status_bar = 100;
                     }
+                    ellapledTicks = DateTime.Now.Ticks - ellapledTicks;
+                    logger.Trace("Передан за " + ellapledTicks + "Тактов");
+                    TimeSpan elapsedSpan = new TimeSpan(ellapledTicks);
+                    logger.Trace("Передан за " + elapsedSpan.TotalSeconds + "Секунд");
 
                 }
                 else  //В случае если не получено данные
@@ -607,7 +630,8 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Пользователь отменил передачу");
 
-                    send_single_message(SlaveState.haveusercanceltransfer, TableUsedforRegisters.SlaveId);
+                    send_single_message(SlaveState.haveusercanceltransfer, TableUsedforRegisters.StateSlaveRegisters);
+                    send_single_message(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters);
                     return;
                 }
 

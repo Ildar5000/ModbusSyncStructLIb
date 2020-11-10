@@ -11,7 +11,9 @@ namespace ModbusSyncStructLIb.DespriptionState
         /// <summary>
         /// Статус
         /// </summary>
-        public const byte StateSlaveRegisters = 0;
+        public const byte StateSlaveRegisters = 1;
+
+
 
         /// <summary>
         /// ИД Слайва и Мастера

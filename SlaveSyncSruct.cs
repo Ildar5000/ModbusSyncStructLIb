@@ -433,7 +433,9 @@ namespace ModbusSyncStructLIb
                 if (slave.DataStore.HoldingRegisters[1] == SlaveState.haveusercanceltransfer)
                 {
                     logger.Info("Пользователь отменил посылку");
-                    update_after_error();
+
+                    slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                    //update_after_error();
                 }
 
                 if (slave.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
@@ -486,6 +488,7 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Пользователь отменил посылку");
                     update_after_error();
+                    //modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                 }
 
                 if (modbusTcp.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
@@ -866,7 +869,7 @@ namespace ModbusSyncStructLIb
                 logger.Error("Ошибка десеризация");
 
                 ///time reboot
-                Thread.Sleep(1000);
+                Thread.Sleep(500);
                 update_after_error();
             }
             if (modbusTcp != null)
