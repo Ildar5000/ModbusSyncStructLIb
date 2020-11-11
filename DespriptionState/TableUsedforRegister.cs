@@ -42,5 +42,11 @@ namespace ModbusSyncStructLIb.DespriptionState
         /// </summary>
         public const ushort arcv = 6;
 
+
+        /// <summary>
+        /// Кол-во переднных какналов за 1 запрос
+        /// </summary>
+        public const int count_packet = 70;
+
     }
 }

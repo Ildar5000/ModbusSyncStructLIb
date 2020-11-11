@@ -71,6 +71,10 @@ namespace ModbusSyncStructLIb
         public TimeSpan elapsedSpan;
 
 
+        #region
+        public byte[] date;
+        public ushort[] sentpacket;
+        #endregion
 
 
         #region init
@@ -453,51 +457,40 @@ namespace ModbusSyncStructLIb
         }
         #endregion
 
-        public void write_console(byte[] date)
-        {
-            //Console.WriteLine("bytes:");
-            logger.Info("bytes:");
-            for (int i=0;i<date.Length;i++)
-            {
-                Console.Write(date[i]+"  ");
-            }
-        }
-
-        public void write_console(ushort[] date)
-        {
-            //Console.WriteLine("ushort:");
-            logger.Info("ushort:");
-            for (int i = 0; i < date.Length; i++)
-            {
-                Console.Write(date[i] + "  ");
-            }
-        }
-
         /// <summary>
         /// отправка инфоданных
         /// </summary>
         public void send_multi_message(MemoryStream stream)
         {
             status_bar = 0;
+
             stoptransfer_signal = false;
+
+
+
             logger.Info("Изменения структуры и подготовка к передачи");
             //Мастер занят
             state_master = 1;
 
             ushort coilAddress = 10;
-            byte[] date = stream.ToArray();
+            date = stream.ToArray();
 
             int count = 50;
             count = (date.Length/2)+1;
             ushort[] date_modbus = new ushort[date.Length / 2 + 1];
 
             //Кол-во переднных какналов за 1 запрос
-            int count_send_packet = 70;
+            int count_send_packet = TableUsedforRegisters.count_packet;
             
-            ushort[] sentpacket = new ushort[count_send_packet];
+            //передача за 1 раз
+            sentpacket = new ushort[count_send_packet];
 
+            //Вывод данных
             //write_console(date);
             //Console.WriteLine("");
+
+
+
             //конвертирует в ushort
             status_bar = 10;
             
@@ -507,11 +500,12 @@ namespace ModbusSyncStructLIb
             
             status_bar = 15;
 
+            //Вывод данных
             //write_console(date_modbus);
 
             byte[] date_unpack = new byte[date.Length];
 
-            /*
+            /* перевод из байтов в юшорт
             Buffer.BlockCopy(date_modbus, 0, date_unpack, 0, date.Length);
             Console.WriteLine("");
             write_console(date_unpack);
@@ -552,8 +546,10 @@ namespace ModbusSyncStructLIb
                     {
                         logger.Trace("Передача меньше чем, пакет");
                         logger.Info("Статус свободен:");
+
                         //SendStatusforSlave(SlaveState.havetimetransfer);
                         //Отправка кол-во байт
+
                         Sendpaketwithcountbytes(date.Length);
                         logger.Info("Статус свободен:");
                         logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
@@ -629,7 +625,7 @@ namespace ModbusSyncStructLIb
                 if (stoptransfer_signal == true)
                 {
                     logger.Info("Пользователь отменил передачу");
-
+                    status_bar = 100;
                     send_single_message(SlaveState.haveusercanceltransfer, TableUsedforRegisters.StateSlaveRegisters);
                     send_single_message(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters);
                     return;
@@ -674,9 +670,10 @@ namespace ModbusSyncStructLIb
                 sentpacket[k] = date_modbus[j];
                 k++;
             }
-            //Console.WriteLine("Отправка данных");
+            
             logger.Trace("Отправка данных");
 
+            //вывод в консоль
             //write_console(sentpacket);
 
             k = 0;
@@ -697,8 +694,6 @@ namespace ModbusSyncStructLIb
             {
                 masterTCP.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
             }
-
-            //Console.WriteLine("Отправлено");
 
             logger.Trace("Отправлено");
             Thread.Sleep(50);
@@ -737,11 +732,12 @@ namespace ModbusSyncStructLIb
                 sentpacket[k] = date_modbus[j];
                 k++;
             }
-            //Console.WriteLine("Отправка данных");
-            logger.Trace("Отправка данных");
-            write_console(sentpacket);
 
-            //Console.WriteLine("Отправка данных");
+            logger.Trace("Отправка данных");
+            
+            //вывод в консоль
+            //write_console(sentpacket);
+
             logger.Trace("Отправка данных");
 
             //если slave свободен то отправляем
@@ -755,7 +751,6 @@ namespace ModbusSyncStructLIb
                 masterTCP.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
             }
         
-            //Console.WriteLine("Отправлено");
 
             logger.Trace("Отправлено");
 
@@ -796,6 +791,7 @@ namespace ModbusSyncStructLIb
 
                 ushort[] sentpacket = new ushort[count_send_packet];
 
+                //вывод в консоль
                 //write_console(date);
                 //Console.WriteLine("");
 
@@ -947,8 +943,6 @@ namespace ModbusSyncStructLIb
             stoptransfer_signal = true;
         }
 
-
-
         /// <summary>
         /// Отправка данных
         /// </summary>
@@ -977,6 +971,33 @@ namespace ModbusSyncStructLIb
                 logger.Error(ex);
             }
         }
+
+
+
+
+        #region вывод в консоль список байтов
+
+        public void write_console(byte[] date)
+        {
+            //Console.WriteLine("bytes:");
+            logger.Info("bytes:");
+            for (int i = 0; i < date.Length; i++)
+            {
+                Console.Write(date[i] + "  ");
+            }
+        }
+
+        public void write_console(ushort[] date)
+        {
+            //Console.WriteLine("ushort:");
+            logger.Info("ushort:");
+            for (int i = 0; i < date.Length; i++)
+            {
+                Console.Write(date[i] + "  ");
+            }
+        }
+
+        #endregion
 
         /*
         #region Примеры
