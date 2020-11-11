@@ -35,8 +35,8 @@ namespace ModbusSyncStructLIb
         public ModbusTcpSlave modbusTcp;
         public TcpListener ListenerTCP;
 
-        public int status_bar=0;
-        int statusbar_value_repeat = 0;
+        public double status_bar=0;
+        double statusbar_value_repeat = 0;
 
 
         int TypeModbus=0;
@@ -54,7 +54,7 @@ namespace ModbusSyncStructLIb
         /// <summary>
         /// Кол-во пакетов в одном запросе
         /// </summary>
-        int count_send_packet = 70;
+        int count_send_packet = TableUsedforRegisters.count_packet;
 
         /// <summary>
         /// Кол-во которое нужно передать
@@ -64,10 +64,15 @@ namespace ModbusSyncStructLIb
         /// <summary>
         /// Кол-во которое нужно передать ushort
         /// </summary>
-        int countDataStructUsshort; 
+        int countDataStructUsshort;
         /// <summary>
         /// Кол-во переданного
-        
+        int all_get_packet;
+
+        //начало передачи
+        bool start_transfer = false;
+
+
         /// </summary>
         int countrecivedcount = 0;
         ushort[] receive_packet_data;
@@ -86,6 +91,8 @@ namespace ModbusSyncStructLIb
 
         double check_deltatime = 0;
 
+
+        #region init
 
         public SlaveSyncSruct()
         {
@@ -280,6 +287,9 @@ namespace ModbusSyncStructLIb
 
         }
 
+        #endregion
+
+
         public void close()
         {
             if (modbusTcp!=null)
@@ -295,7 +305,25 @@ namespace ModbusSyncStructLIb
                 serialPort.Close();
             }
         }
-      
+
+        #region getters
+        public double get_all_packet()
+        {
+            return countDataStruct;
+        }
+
+        public double get_all_getpacket()
+        {
+            return all_get_packet;
+        }
+
+        public bool get_start_trasfert()
+        {
+            return start_transfer;
+        }
+
+        #endregion
+
         private void Modbus_DataStoreWriteTo(object sender, Modbus.Data.DataStoreEventArgs e)
         {
             switch (e.ModbusDataType)
@@ -304,7 +332,11 @@ namespace ModbusSyncStructLIb
                     //запросы состояния
                     if (e.Data.B.Count == 1)
                     {
+                        //про состояние 
                         status_bar = 0;
+                        all_get_packet = 0;
+
+
                         if (slave != null)
                         {
                             if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
@@ -350,6 +382,11 @@ namespace ModbusSyncStructLIb
 
                     if (e.Data.B.Count == 2)
                     {
+                        //про состояние 
+                        status_bar = 0;
+                        all_get_packet = 0;
+
+
                         ushort[] tworex=new ushort[2];
                         for (int i = 0; i < e.Data.B.Count; i++)
                         {
@@ -369,7 +406,6 @@ namespace ModbusSyncStructLIb
 
                     if (e.Data.B.Count > 2)
                     {
-                        status_bar = 10;
                         if (modbusTcp != null)
                         {
                             //Console.WriteLine("Пришел пакет с данными:");
@@ -614,10 +650,20 @@ namespace ModbusSyncStructLIb
             //перводим в массив байт
             Buffer.BlockCopy(date, 0, receivedpacket, 0, receivedpacket.Length);
 
+
+            
+
+
             countrecivedcount += receivedpacket.Length;
             Console.WriteLine("Получено:" + countDataStructUsshort);
 
-            statusbar_value_repeat = 100 / (countDataStruct+2);
+            // о статусах
+
+            all_get_packet += date.Length*2;
+
+            double countpacket = (countDataStruct/2) / count_send_packet;
+
+            statusbar_value_repeat = 100 / countpacket;
 
             if (countrecivedcount > countDataStruct)
             {
@@ -806,6 +852,7 @@ namespace ModbusSyncStructLIb
                     logger.Info("В регистр состояние готов принимать пакеты" + modbusTcp.DataStore.HoldingRegisters[1]);
                 }
 
+                all_get_packet = 0;
                 status_bar = 100;
 
             }

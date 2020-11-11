@@ -63,6 +63,8 @@ namespace ModbusSyncStructLIb
         /// </summary>
         public bool stoptransfer_signal = false;
 
+        #region статусы
+
         /// <summary>
         /// Измерение временени в тиках
         /// </summary>
@@ -70,10 +72,13 @@ namespace ModbusSyncStructLIb
 
         public TimeSpan elapsedSpan;
 
+        public bool falltransfer=false;
 
-        #region
-        public byte[] date;
-        public ushort[] sentpacket;
+        byte[] date;
+        ushort[] sentpacket;
+
+
+        double alltranferendpacket=0;
         #endregion
 
 
@@ -273,6 +278,16 @@ namespace ModbusSyncStructLIb
 
         #endregion
 
+        public double getdatatrasfer()
+        {
+            return date.Length;
+        }
+
+        public double getdatatrasferreal()
+        {
+            return alltranferendpacket;
+        }
+
         /// <summary>
         /// Статус процесса
         /// </summary>
@@ -283,6 +298,7 @@ namespace ModbusSyncStructLIb
         {
             try
             {
+                stoptransfer();
                 if (masterTCP != null)
                 {
 
@@ -465,7 +481,7 @@ namespace ModbusSyncStructLIb
             status_bar = 0;
 
             stoptransfer_signal = false;
-
+            falltransfer = false;
 
 
             logger.Info("Изменения структуры и подготовка к передачи");
@@ -493,7 +509,8 @@ namespace ModbusSyncStructLIb
 
             //конвертирует в ushort
             status_bar = 10;
-            
+            alltranferendpacket = 0;
+
             logger.Info("Преобразование в ushort:Начато");
             Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);
             logger.Info("Преобразование в ushort:закончено");
@@ -584,6 +601,7 @@ namespace ModbusSyncStructLIb
             }
             catch(Exception ex)
             {
+                falltransfer = true;
                 Console.WriteLine(ex);
                 logger.Error(ex);
                 logger.Error("Не удалось отправить данные");
@@ -650,6 +668,9 @@ namespace ModbusSyncStructLIb
                         status_bar += status_bar_temp;
                         other_trasfer_send(i, k, coilAddress, count_send_packet, date_modbus, sentpacket, date);
                     }
+
+                    // о статусе
+                    alltranferendpacket += sentpacket.Length*2;
                 }
                 else
                 {
