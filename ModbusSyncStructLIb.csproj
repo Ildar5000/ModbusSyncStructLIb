@@ -55,6 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CheckConnect\ManagerConnectionModbus.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="ControlCheck\Crc16.cs" />
     <Compile Include="DespriptionState\SlaveState.cs" />

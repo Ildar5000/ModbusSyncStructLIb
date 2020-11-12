@@ -1,8 +1,7 @@
 
 *.p7s
 
-bin/*
-
+*bin/
 *.cache
 
 .vs/*

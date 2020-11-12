@@ -22,6 +22,7 @@ using SevenZip;
 using System.Xml.Serialization;
 using ModbusSyncStructLIb.Settings;
 using System.Net.Sockets;
+using Modbus.Message;
 
 namespace ModbusSyncStructLIb
 {
@@ -31,8 +32,8 @@ namespace ModbusSyncStructLIb
         SerialPort serialPort;
         SerialPortAdapter SerialPortAdapter;
         ModbusIpMaster masterTCP;
-        
-        ModbusSerialMaster master;
+
+        public ModbusMaster master { get; set; }
         #endregion
 
         #region modbus tcp
@@ -220,14 +221,17 @@ namespace ModbusSyncStructLIb
                     logger.Info("Создания modbus RTU");
                     master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
                     
-                    master.Transport.Retries = 1000;
-                    master.Transport.ReadTimeout = 1000;
-                    master.Transport.WriteTimeout = 1000;
+                    //master.Transport.Retries = 1000;
+                    //master.Transport.ReadTimeout = 1000;
+                    //master.Transport.WriteTimeout = 1000;
 
 
                     //slaveID = 1;
                     ushort startAddress = 1;
                     ushort numOfPoints = 10;
+
+                    //master.ExecuteCustomMessage(new IModbusMaster())
+
                     ushort[] holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
 
                     var transport = master.Transport;
@@ -251,8 +255,8 @@ namespace ModbusSyncStructLIb
                     //slaveID = 1;
                     ushort startAddress = 1;
                     ushort numOfPoints = 10;
-                    ushort[] holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
-                    Console.WriteLine(holding_register);
+                    //ushort[] holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+                    //Console.WriteLine(holding_register);
                 }
 
                 //ModbusIpMaster modbusIpMaster
@@ -261,11 +265,11 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Создания modbus modbusIp");
                     TcpClient client = new TcpClient(IP_client, IP_client_port);
-                    masterTCP = ModbusIpMaster.CreateIp(client);
-                    
-                    masterTCP.Transport.Retries = 1000;
-                    masterTCP.Transport.ReadTimeout = 1000;
-                    masterTCP.Transport.WriteTimeout = 1000;
+                    master = ModbusIpMaster.CreateIp(client);
+
+                    master.Transport.Retries = 1000;
+                    master.Transport.ReadTimeout = 1000;
+                    master.Transport.WriteTimeout = 1000;
                 }
             }
             catch(Exception ex)
@@ -299,12 +303,6 @@ namespace ModbusSyncStructLIb
             try
             {
                 stoptransfer();
-                if (masterTCP != null)
-                {
-
-                    masterTCP.Dispose();
-                }
-
                 if (master != null)
                 {
                     master.Dispose();
@@ -326,7 +324,7 @@ namespace ModbusSyncStructLIb
             ushort[] holding_register = {0};
             if (TypeModbus==2)
             {
-                holding_register = masterTCP.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+                holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
             }
             else
             {
@@ -354,11 +352,6 @@ namespace ModbusSyncStructLIb
                 status_slave = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
             }
 
-            if (masterTCP!=null)
-            {
-                status_slave = masterTCP.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
-            }
-
             return status_slave[0];
         }
 
@@ -377,11 +370,6 @@ namespace ModbusSyncStructLIb
                 status_slave = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
             }
 
-            if (masterTCP != null)
-            {
-                status_slave = masterTCP.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
-            }
-
             return status_slave[0];
         }
 
@@ -398,10 +386,6 @@ namespace ModbusSyncStructLIb
                 master.WriteSingleRegister(slaveID, startAddress, status);
             }
 
-            if (masterTCP != null)
-            {
-                masterTCP.WriteSingleRegister(slaveID, startAddress, status);
-            }
         }
 
         #region отправка инфо о кол-во бит
@@ -452,11 +436,6 @@ namespace ModbusSyncStructLIb
             {
                 master.WriteSingleRegister(slaveID, coilAddress, sentpacket);
             }
-
-            if (masterTCP != null)
-            {
-                masterTCP.WriteSingleRegister(slaveID, coilAddress, sentpacket);
-            }
         }
 
         private void sendbigdataformaster(ushort coilAddress, ushort[] sentpacket)
@@ -464,11 +443,6 @@ namespace ModbusSyncStructLIb
             if (master != null)
             {
                 master.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
-            }
-
-            if (masterTCP != null)
-            {
-                masterTCP.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
             }
         }
         #endregion
@@ -702,8 +676,6 @@ namespace ModbusSyncStructLIb
             logger.Trace("Отправка данных");
 
             Console.WriteLine("Контрольная сумма");
-
-
 
             //если slave свободен то отправляем
             if (master != null)
@@ -992,9 +964,6 @@ namespace ModbusSyncStructLIb
                 logger.Error(ex);
             }
         }
-
-
-
 
         #region вывод в консоль список байтов
 

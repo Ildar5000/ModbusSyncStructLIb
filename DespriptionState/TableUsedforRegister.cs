@@ -41,6 +41,11 @@ namespace ModbusSyncStructLIb.DespriptionState
         /// Контрольная архив
         /// </summary>
         public const ushort arcv = 6;
+        
+        /// <summary>
+        /// Диагностика
+        /// </summary>
+        public const ushort diagnostik_send = 9;
 
 
         /// <summary>

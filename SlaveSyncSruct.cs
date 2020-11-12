@@ -38,6 +38,9 @@ namespace ModbusSyncStructLIb
         public double status_bar=0;
         double statusbar_value_repeat = 0;
 
+        bool connection_enanble = false;
+        public ushort randnumber = 0;
+
 
         int TypeModbus=0;
 
@@ -267,12 +270,12 @@ namespace ModbusSyncStructLIb
 
                     logger.Info("Slave подключен");
 
-                    modbusTcp = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP);
+                    slave = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP);
 
-                    modbusTcp.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
-                    modbusTcp.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
+                    slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
+                    slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
 
-                    Task listenTask=  modbusTcp.ListenAsync();
+                    Task listenTask= slave.ListenAsync();
                     logger.Info("Slave Ожидание");
                   
                 }
@@ -292,17 +295,17 @@ namespace ModbusSyncStructLIb
 
         public void close()
         {
-            if (modbusTcp!=null)
-            {
-                logger.Warn("Закрытие Slave");
-                modbusTcp.Dispose();
-            }
             if (slave!=null)
             {
                 
                 slave.Dispose();
                 logger.Warn("Закрытие Slave");
-                serialPort.Close();
+
+                if (serialPort!=null)
+                {
+                    serialPort.Close();
+                }
+                
             }
         }
 
@@ -356,27 +359,15 @@ namespace ModbusSyncStructLIb
                                 //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
                                 logger.Info("Пришла команда на обработку" + e.Data.B[0]);
                             }
-                            
-                        }
 
-                        if (modbusTcp != null)
-                        {
-                            if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
+                            if (e.Data.B[0] !=0)
                             {
-                                logger.Info("Перешел в состояние " + e.Data.B[0] + " отмена");
-                                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
-
-                                processing_singleregx(e.Data.B[0]);
+                                ushort datediag = e.Data.B[0];
+                                processing_diag(e.Data.B[0]);
                             }
-                            else
-                            {
-                                logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
-                                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
 
-                                processing_singleregx(e.Data.B[0]);
-                                //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
-                                logger.Info("Пришла команда на обработку" + e.Data.B[0]);
-                            }
+
+
                         }
                     }
 
@@ -398,31 +389,10 @@ namespace ModbusSyncStructLIb
                         {
                             processing_tworegx(tworex);
                         }
-                        if (modbusTcp != null)
-                        {
-                            processing_tworegx(tworex);
-                        }
                     }    
 
                     if (e.Data.B.Count > 2)
                     {
-                        if (modbusTcp != null)
-                        {
-                            //Console.WriteLine("Пришел пакет с данными:");
-                            logger.Info("Пришел пакет с данными:");
-                            for (int i = 0; i < e.Data.B.Count; i++)
-                            {
-                                receive_packet_data[i] = e.Data.B[i];
-                                //Console.Write(receive_packet_data[i] + " ");
-                            }
-                            Console.WriteLine("");
-                            logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
-                            modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
-
-                            //Console.WriteLine("Обработка пакета");
-                            logger.Info("Обработка пакета");
-                            processing_infopaket(receive_packet_data);
-                        }
                         if (slave!=null)
                         {
                             //Console.WriteLine("Пришел пакет с данными:");
@@ -457,7 +427,16 @@ namespace ModbusSyncStructLIb
                     break;
             }
         }
-        
+
+        private void processing_diag(ushort v)
+        {
+            if (randnumber!=v)
+            {
+                logger.Trace("Связь присутствует");
+                randnumber = v;
+            }
+        }
+
         #region Первичная обработка после получения данных
         /// <summary>
         /// обработка статусов
@@ -466,6 +445,11 @@ namespace ModbusSyncStructLIb
         {
             if (slave!=null)
             {
+                if (slave.DataStore.HoldingRegisters[TableUsedforRegisters.diagnostik_send]!=0)
+                {
+                    processing_diag(date);
+                }
+
                 if (slave.DataStore.HoldingRegisters[1] == SlaveState.haveusercanceltransfer)
                 {
                     logger.Info("Пользователь отменил посылку");
@@ -518,56 +502,6 @@ namespace ModbusSyncStructLIb
                     }
                 }
             }
-            if (modbusTcp!=null)
-            {
-                if (modbusTcp.DataStore.HoldingRegisters[1] == SlaveState.haveusercanceltransfer)
-                {
-                    logger.Info("Пользователь отменил посылку");
-                    update_after_error();
-                    //modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                }
-
-                if (modbusTcp.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
-                {
-                    logger.Info("Состояние slave" + modbusTcp.DataStore.HoldingRegisters[1]);
-                    //если данные больше 100, то это кол-ве байт
-                    if (date > 70)
-                    {
-                        countDataStruct = Convert.ToInt32(date);
-                        //Console.WriteLine("Получен объем данных в байт:" + countDataStruct);
-                        logger.Info("Получен объем данных в байт:" + countDataStruct);
-
-                        int dataushort = (countDataStruct / 2) + 1;
-                        //Console.WriteLine("Получен объем данных в ushort:" + dataushort);
-                        logger.Info("Получен объем данных в ushort:" + dataushort);
-
-                        data_byte_for_processing = new byte[countDataStruct];
-                        countDataStructUsshort = (countDataStruct / 2) + 1;
-                    }
-
-                    modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                    logger.Info("Slave перешел в состоянии передача" + modbusTcp.DataStore.HoldingRegisters[1]);
-
-                }
-                if (modbusTcp.DataStore.HoldingRegisters[1] == SlaveState.havechecktotime)
-                {
-                    logger.Info("Состояние slave" + modbusTcp.DataStore.HoldingRegisters[1]);
-                    logger.Info("Состояние slave проверка контрольной суммы");
-                    // В случае если идет проверка системы
-                    if (cr16 == date)
-                    {
-                        logger.Info("Сумма совпала");
-
-                        modbusTcp.DataStore.HoldingRegisters[5] = StateCR.haveNotError;
-                        logger.Info("В регистр проверки контрольной суммы записался (проверка CR16 состоялась)" + modbusTcp.DataStore.HoldingRegisters[5]);
-
-                        modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                        logger.Info("В регистр состояние (проверка CR16 состоялась)" + modbusTcp.DataStore.HoldingRegisters[1]);
-
-                        //logger.Info("Сумма совпала " + SlaveState.have_free_time);
-                    }
-                }
-            }
 
 
         }
@@ -608,34 +542,6 @@ namespace ModbusSyncStructLIb
                     logger.Info("Slave перешел в состоянии передача" + slave.DataStore.HoldingRegisters[1]);
 
                 }
-            }
-
-            if (modbusTcp != null)
-            {
-                logger.Info("Состояние slave" + modbusTcp.DataStore.HoldingRegisters[1]);
-                //если данные больше 100, то это кол-ве байт
-                if (v[0] > 70)
-                {
-                    int seconddate = Convert.ToInt32(v[1]);
-                    countDataStruct = Convert.ToInt32(v[0]);
-                    int back = (v[1] << 16) | v[0];
-                    countDataStruct = back;
-
-                    //Console.WriteLine("Получен объем данных в байт:" + countDataStruct);
-                    logger.Info("Получен объем данных в байт:" + countDataStruct);
-
-                    int dataushort = (countDataStruct / 2) + 1;
-                    //Console.WriteLine("Получен объем данных в ushort:" + dataushort);
-                    logger.Info("Получен объем данных в ushort:" + dataushort);
-
-                    data_byte_for_processing = new byte[countDataStruct];
-                    countDataStructUsshort = (countDataStruct / 2) + 1;
-
-                    //в случии если пакет прервался то обнуляем
-                    countrecivedcount = 0;
-                }
-                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                logger.Info("Slave перешел в состоянии передача" + modbusTcp.DataStore.HoldingRegisters[1]);
             }
         }
 
