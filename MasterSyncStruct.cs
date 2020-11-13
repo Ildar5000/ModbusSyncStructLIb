@@ -64,6 +64,8 @@ namespace ModbusSyncStructLIb
         /// </summary>
         public bool stoptransfer_signal = false;
 
+        public bool havetrasfer = false;
+
         #region статусы
 
         /// <summary>
@@ -295,7 +297,7 @@ namespace ModbusSyncStructLIb
         /// <summary>
         /// Статус процесса
         /// </summary>
-        public int status_bar = 0;
+        public double status_bar = 0;
 
 
         public void close()
@@ -453,7 +455,7 @@ namespace ModbusSyncStructLIb
         public void send_multi_message(MemoryStream stream)
         {
             status_bar = 0;
-
+            havetrasfer = true;
             stoptransfer_signal = false;
             falltransfer = false;
 
@@ -557,6 +559,8 @@ namespace ModbusSyncStructLIb
                         }
                         status_bar = 100;
                     }
+
+                    havetrasfer = false;
                     ellapledTicks = DateTime.Now.Ticks - ellapledTicks;
                     logger.Trace("Передан за " + ellapledTicks + "Тактов");
                     elapsedSpan = new TimeSpan(ellapledTicks);
@@ -607,7 +611,7 @@ namespace ModbusSyncStructLIb
             //Console.WriteLine("Будет отправлено " + countneedsend + " пакетов");
             logger.Info("Будет отправлено " + countneedsend + " пакетов");
 
-            int status_bar_temp = 80 / countneedsend;
+            double status_bar_temp = 100 / Convert.ToDouble(countneedsend);
 
             //кол-во отправок
             for (int i = 0; i < countneedsend; i++)

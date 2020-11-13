@@ -336,38 +336,37 @@ namespace ModbusSyncStructLIb
                     if (e.Data.B.Count == 1)
                     {
                         //про состояние 
-                        status_bar = 0;
-                        all_get_packet = 0;
-
 
                         if (slave != null)
                         {
-                            if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
+                            if (e.StartAddress==TableUsedforRegisters.diagnostik_send)
                             {
-                                logger.Info("Перешел в состояние " + e.Data.B[0] + " Отмена");
-                                slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
-
-                                processing_singleregx(e.Data.B[0]);
-                                //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                                slave.DataStore.HoldingRegisters[TableUsedforRegisters.diagnostik_send] = e.Data.B[0];
+                                processing_diag(e.Data.B[0]);
                             }
                             else
                             {
-                                logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
-                                slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+                                status_bar = 0;
+                                all_get_packet = 0;
 
-                                processing_singleregx(e.Data.B[0]);
-                                //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
-                                logger.Info("Пришла команда на обработку" + e.Data.B[0]);
-                            }
+                                if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
+                                {
+                                    logger.Info("Перешел в состояние " + e.Data.B[0] + " Отмена");
+                                    slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
 
-                            if (e.Data.B[0] !=0)
-                            {
-                                ushort datediag = e.Data.B[0];
-                                processing_diag(e.Data.B[0]);
-                            }
+                                    processing_singleregx(e.Data.B[0]);
+                                    //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                                }
+                                else
+                                {
+                                    logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
+                                    slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
 
-
-
+                                    processing_singleregx(e.Data.B[0]);
+                                    //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
+                                    logger.Info("Пришла команда на обработку" + e.Data.B[0]);
+                                }
+                            }  
                         }
                     }
 
@@ -435,6 +434,7 @@ namespace ModbusSyncStructLIb
                 logger.Trace("Связь присутствует");
                 randnumber = v;
             }
+            randnumber = v;
         }
 
         #region Первичная обработка после получения данных
@@ -445,11 +445,6 @@ namespace ModbusSyncStructLIb
         {
             if (slave!=null)
             {
-                if (slave.DataStore.HoldingRegisters[TableUsedforRegisters.diagnostik_send]!=0)
-                {
-                    processing_diag(date);
-                }
-
                 if (slave.DataStore.HoldingRegisters[1] == SlaveState.haveusercanceltransfer)
                 {
                     logger.Info("Пользователь отменил посылку");

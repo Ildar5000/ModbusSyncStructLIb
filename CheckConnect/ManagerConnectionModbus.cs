@@ -17,7 +17,7 @@ namespace ModbusSyncStructLIb.CheckConnect
         SlaveSyncSruct slave;
 
         bool islive = true;
-        bool have_connection = false;
+        public bool have_connection = false;
 
         Random rand = new Random();
 
@@ -64,7 +64,7 @@ namespace ModbusSyncStructLIb.CheckConnect
 
         public void restart()
         {
-            Thread.Sleep(100);
+            Thread.Sleep(1000);
             start();
         }
 
@@ -86,13 +86,13 @@ namespace ModbusSyncStructLIb.CheckConnect
         public void timeclick(object date)
         {
             ushort dateold = (ushort)date;
-            Thread.Sleep(1000);
+            Thread.Sleep(200);
             if (dateold== crtime)
             {
-                logger.Warn("Канал завис");
-                
+                //stop();
+                logger.Warn("Канал завис");          
             }
-            throw new Exception("Канал завис");
+            
         }
 
         public void masterstart()
@@ -106,7 +106,7 @@ namespace ModbusSyncStructLIb.CheckConnect
                 master.master.Transport.Retries = 5;
                 master.master.Transport.WriteTimeout = 50;
                 master.master.Transport.ReadTimeout = 50;
-                crtime = (ushort)rand.Next(1,100);
+                crtime = (ushort)rand.Next(11,100);
             }
             catch (Exception ex)
             {
@@ -115,7 +115,6 @@ namespace ModbusSyncStructLIb.CheckConnect
             }
             while (islive)
             {
-                Console.WriteLine("work");
                 try
                 {
                     Thread wating = new Thread(new ParameterizedThreadStart(timeclick));
@@ -127,14 +126,22 @@ namespace ModbusSyncStructLIb.CheckConnect
                     have_connection = true;
                     Thread.Sleep(100);
 
-                    ushort datetemp = 0;
                     ushort[] getrex=master.master.ReadHoldingRegisters(master.slaveID, TableUsedforRegisters.diagnostik_send, 1);
+                    wating.Abort();
 
                     have_connection = true;
-                    if (datetemp== getrex[0])
+                    if (crtime == getrex[0])
                     {
-                        crtime = (ushort)rand.Next(1, 100);
+                        logger.Trace("Обратная связь присутствует");
+                        crtime = (ushort)rand.Next(11, 100);
                     }
+                    else
+                    {
+                        logger.Trace("Обратная связь отсутствует");
+                    }
+                    crtime = (ushort)rand.Next(11, 100);
+
+                    Thread.Sleep(2000);
                 }
                 catch (Exception ex)
                 {
@@ -144,7 +151,7 @@ namespace ModbusSyncStructLIb.CheckConnect
                     //Console.WriteLine(ex);
                     have_connection = false;
                     //logger.Error(ex);
-                    Thread.Sleep(1000);
+                    Thread.Sleep(2000);
                     break;
                 }
             }
@@ -170,18 +177,21 @@ namespace ModbusSyncStructLIb.CheckConnect
             while (islive)
             {
                Console.WriteLine("work");
+               Thread.Sleep(200);
                if (crtime!= slave.randnumber)
                {
                     logger.Trace("Есть связь");
                     crtime = slave.randnumber;
-                    Thread.Sleep(2000);
                     have_connection = true;
+                    Thread.Sleep(5000);
+                    
                 }
                else
                {
+                    crtime = slave.randnumber;
                     logger.Warn("Нету связи");
                     have_connection = false;
-                    Thread.Sleep(2000);
+                    Thread.Sleep(5000);
                 }
             }
         }
