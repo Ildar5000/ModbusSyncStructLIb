@@ -53,6 +53,9 @@ namespace ModbusSyncStructLIb.Settings
             slaveID = 1;
         }
 
+
+
+
         public SettingsModbus(string ComName, int BoudRate, int DataBits, string Party_type, string StopBits_type, int ReadTimeout, int WriteTimeout,string IP_client,int port_IP_client,int typeModbus,byte slaveID, string typeModbusSTR)
         {
             this.ComName = ComName;

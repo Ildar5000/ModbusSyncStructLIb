@@ -100,116 +100,124 @@ namespace ModbusSyncStructLIb
         public SlaveSyncSruct()
         {
 
-            var loggerconf = new XmlLoggingConfiguration("NLog.config");
-            logger = LogManager.GetCurrentClassLogger();
-
-            var path = System.IO.Path.GetFullPath(@"Settingsmodbus.xml");
-
-            if (File.Exists(path) == true)
+            try
             {
-                SettingsModbus settings;
-                // десериализация
-                using (FileStream fs = new FileStream("Settingsmodbus.xml", FileMode.OpenOrCreate))
+                var loggerconf = new XmlLoggingConfiguration("NLog.config");
+                logger = LogManager.GetCurrentClassLogger();
+
+                var path = System.IO.Path.GetFullPath(@"Settingsmodbus.xml");
+
+                if (File.Exists(path) == true)
                 {
-                    XmlSerializer formatter = new XmlSerializer(typeof(SettingsModbus));
-                    settings = (SettingsModbus)formatter.Deserialize(fs);
-
-                }
-
-                TypeModbus = settings.typeModbus;
-
-                if (settings.typeModbus!=2)
-                {
-                    serialPort = new SerialPort(settings.ComName);
-                    serialPort.BaudRate = settings.BoudRate;
-                    serialPort.DataBits = settings.DataBits;
-                    serialPort.Parity = (Parity)settings.Party_type_int;
-                    check_deltatime = settings.deltatime;
-
-                    switch (settings.Party_type_str)
+                    SettingsModbus settings;
+                    // десериализация
+                    using (FileStream fs = new FileStream("Settingsmodbus.xml", FileMode.OpenOrCreate))
                     {
-                        case "Space":
-                            serialPort.Parity = Parity.Space;
-                            break;
-                        case "Even":
-                            serialPort.Parity = Parity.Even;
-                            break;
-                        case "Mark":
-                            serialPort.Parity = Parity.Mark;
-                            break;
-                        case "Odd":
-                            serialPort.Parity = Parity.Odd;
-                            break;
-                        default:
-                            //none
-                            serialPort.Parity = Parity.None;
-                            break;
+                        XmlSerializer formatter = new XmlSerializer(typeof(SettingsModbus));
+                        settings = (SettingsModbus)formatter.Deserialize(fs);
+
                     }
 
+                    TypeModbus = settings.typeModbus;
 
-                    switch (settings.StopBits_type_str)
+                    if (settings.typeModbus != 2)
                     {
-                        case "One":
-                            serialPort.StopBits = StopBits.One;
-                            break;
-                        case "OnePointFive":
-                            serialPort.StopBits = StopBits.OnePointFive;
-                            break;
-                        case "Two":
-                            serialPort.StopBits = StopBits.Two;
-                            break;
-                        default:
-                            //none
-                            serialPort.StopBits = StopBits.None;
-                            break;
+                        serialPort = new SerialPort(settings.ComName);
+                        serialPort.BaudRate = settings.BoudRate;
+                        serialPort.DataBits = settings.DataBits;
+                        serialPort.Parity = (Parity)settings.Party_type_int;
+                        check_deltatime = settings.deltatime;
+
+                        switch (settings.Party_type_str)
+                        {
+                            case "Space":
+                                serialPort.Parity = Parity.Space;
+                                break;
+                            case "Even":
+                                serialPort.Parity = Parity.Even;
+                                break;
+                            case "Mark":
+                                serialPort.Parity = Parity.Mark;
+                                break;
+                            case "Odd":
+                                serialPort.Parity = Parity.Odd;
+                                break;
+                            default:
+                                //none
+                                serialPort.Parity = Parity.None;
+                                break;
+                        }
+
+
+                        switch (settings.StopBits_type_str)
+                        {
+                            case "One":
+                                serialPort.StopBits = StopBits.One;
+                                break;
+                            case "OnePointFive":
+                                serialPort.StopBits = StopBits.OnePointFive;
+                                break;
+                            case "Two":
+                                serialPort.StopBits = StopBits.Two;
+                                break;
+                            default:
+                                //none
+                                serialPort.StopBits = StopBits.None;
+                                break;
+                        }
+
+                        //serialPort.Parity = Parity.None;
+                        //serialPort.StopBits = StopBits.One;
+
+                        serialPort.ReadTimeout = settings.ReadTimeout;
+                        serialPort.WriteTimeout = settings.WriteTimeout;
+                        check_deltatime = settings.deltatime;
+                        slaveID = settings.slaveID;
                     }
 
-                    //serialPort.Parity = Parity.None;
-                    //serialPort.StopBits = StopBits.One;
+                    if (settings.typeModbus == 2)
+                    {
+                        IP_client = settings.IP_client;
+                        IP_client_port = settings.port_IP_client;
+                        slaveID = settings.slaveID;
+                        check_deltatime = settings.deltatime;
+                    }
 
-                    serialPort.ReadTimeout = settings.ReadTimeout;
-                    serialPort.WriteTimeout = settings.WriteTimeout;
-                    check_deltatime = settings.deltatime;
-                    slaveID = settings.slaveID;
                 }
-
-                if (settings.typeModbus == 2)
+                else
                 {
-                    IP_client = settings.IP_client;
-                    IP_client_port = settings.port_IP_client;
-                    slaveID = settings.slaveID;
-                    check_deltatime = settings.deltatime;
+                    logger.Error("Нет файла");
                 }
 
+
+                /*
+                PropertiesSetting propertiesSetting = new PropertiesSetting();
+                slaveID = 1;
+                serialPort = new SerialPort(propertiesSetting.PortName);
+
+                serialPort.PortName = propertiesSetting.PortName;
+                serialPort.BaudRate = propertiesSetting.BaudRate;
+                serialPort.DataBits = propertiesSetting.DataBits;
+                TypeModbus = propertiesSetting.TypeComModbus;
+
+                serialPort.Parity = Parity.None;
+                serialPort.StopBits = StopBits.One;
+
+                serialPort.ReadTimeout = 1000;
+                serialPort.WriteTimeout = 1000;
+                */
+
+                receivedpacket = new byte[count_send_packet * 2];
+                receive_packet_data = new ushort[count_send_packet];
+                //data_byte= new byte[count_send_packet*2];
+
+                metaClass = new MetaClassForStructandtherdata();
             }
-            else
+            catch(Exception ex)
             {
-                logger.Error("Нет файла");
+                logger.Error(ex);
             }
-
-
-            /*
-            PropertiesSetting propertiesSetting = new PropertiesSetting();
-            slaveID = 1;
-            serialPort = new SerialPort(propertiesSetting.PortName);
             
-            serialPort.PortName = propertiesSetting.PortName;
-            serialPort.BaudRate = propertiesSetting.BaudRate;
-            serialPort.DataBits = propertiesSetting.DataBits;
-            TypeModbus = propertiesSetting.TypeComModbus;
-
-            serialPort.Parity = Parity.None;
-            serialPort.StopBits = StopBits.One;
-
-            serialPort.ReadTimeout = 1000;
-            serialPort.WriteTimeout = 1000;
-            */
-
-            receivedpacket = new byte[count_send_packet*2];
-            receive_packet_data = new ushort[count_send_packet];
-            //data_byte= new byte[count_send_packet*2];
-
-            metaClass = new MetaClassForStructandtherdata();
         }
 
         public void Open()

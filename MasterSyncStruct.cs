@@ -94,83 +94,89 @@ namespace ModbusSyncStructLIb
 
             var path = System.IO.Path.GetFullPath(@"Settingsmodbus.xml");
 
-            if (File.Exists(path) == true)
+            try
             {
-                SettingsModbus settings;
-                // десериализация
-                using (FileStream fs = new FileStream("Settingsmodbus.xml", FileMode.OpenOrCreate))
+                if (File.Exists(path) == true)
                 {
-                    XmlSerializer formatter = new XmlSerializer(typeof(SettingsModbus));
-                    settings = (SettingsModbus)formatter.Deserialize(fs);
-
-                    logger.Info("Объект десериализован");
-                }
-                TypeModbus = settings.typeModbus;
-
-                if (settings.typeModbus != 2)
-                {
-                    serialPort = new SerialPort(settings.ComName);
-                    serialPort.BaudRate = settings.BoudRate;
-                    serialPort.DataBits = settings.DataBits;
-
-                    switch (settings.Party_type_str)
+                    SettingsModbus settings;
+                    // десериализация
+                    using (FileStream fs = new FileStream("Settingsmodbus.xml", FileMode.OpenOrCreate))
                     {
-                        case "Space":
-                            serialPort.Parity = Parity.Space;
-                            break;
-                        case "Even":
-                            serialPort.Parity = Parity.Even;
-                            break;
-                        case "Mark":
-                            serialPort.Parity = Parity.Mark;
-                            break;
-                        case "Odd":
-                            serialPort.Parity = Parity.Odd;
-                            break;
-                        default:
-                            //none
-                            serialPort.Parity = Parity.None;
-                            break;
+                        XmlSerializer formatter = new XmlSerializer(typeof(SettingsModbus));
+                        settings = (SettingsModbus)formatter.Deserialize(fs);
+
+                        logger.Info("Объект десериализован");
                     }
+                    TypeModbus = settings.typeModbus;
 
-
-                    switch (settings.StopBits_type_str)
+                    if (settings.typeModbus != 2)
                     {
-                        case "One":
-                            serialPort.StopBits = StopBits.One;
-                            break;
-                        case "OnePointFive":
-                            serialPort.StopBits = StopBits.OnePointFive;
-                            break;
-                        case "Two":
-                            serialPort.StopBits = StopBits.Two;
-                            break;
-                        default:
-                            //none
-                            serialPort.StopBits = StopBits.None;
-                            break;
+                        serialPort = new SerialPort(settings.ComName);
+                        serialPort.BaudRate = settings.BoudRate;
+                        serialPort.DataBits = settings.DataBits;
+
+                        switch (settings.Party_type_str)
+                        {
+                            case "Space":
+                                serialPort.Parity = Parity.Space;
+                                break;
+                            case "Even":
+                                serialPort.Parity = Parity.Even;
+                                break;
+                            case "Mark":
+                                serialPort.Parity = Parity.Mark;
+                                break;
+                            case "Odd":
+                                serialPort.Parity = Parity.Odd;
+                                break;
+                            default:
+                                //none
+                                serialPort.Parity = Parity.None;
+                                break;
+                        }
+
+
+                        switch (settings.StopBits_type_str)
+                        {
+                            case "One":
+                                serialPort.StopBits = StopBits.One;
+                                break;
+                            case "OnePointFive":
+                                serialPort.StopBits = StopBits.OnePointFive;
+                                break;
+                            case "Two":
+                                serialPort.StopBits = StopBits.Two;
+                                break;
+                            default:
+                                //none
+                                serialPort.StopBits = StopBits.None;
+                                break;
+                        }
+
+                        serialPort.ReadTimeout = settings.ReadTimeout;
+                        serialPort.WriteTimeout = settings.WriteTimeout;
+
+
+                        slaveID = settings.slaveID;
                     }
+                    if (settings.typeModbus == 2)
+                    {
 
-                    serialPort.ReadTimeout = settings.ReadTimeout;
-                    serialPort.WriteTimeout = settings.WriteTimeout;
-
-
-                    slaveID = settings.slaveID;
+                        IP_client = settings.IP_client;
+                        IP_client_port = settings.port_IP_client;
+                        slaveID = settings.slaveID;
+                    }
                 }
-                if (settings.typeModbus == 2)
+                else
                 {
-
-                    IP_client = settings.IP_client;
-                    IP_client_port = settings.port_IP_client;
-                    slaveID = settings.slaveID;
+                    logger.Error("Нет файла");
                 }
-
-
             }
-            else
+            catch (Exception ex)
             {
-                logger.Error("Нет файла");
+                logger.Error(ex);
             }
+
 
             /*
             propertiesSetting = new PropertiesSetting();

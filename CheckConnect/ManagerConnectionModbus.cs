@@ -126,7 +126,7 @@ namespace ModbusSyncStructLIb.CheckConnect
                     have_connection = true;
                     Thread.Sleep(100);
 
-                    ushort[] getrex=master.master.ReadHoldingRegisters(master.slaveID, TableUsedforRegisters.diagnostik_send, 1);
+                    ushort[] getrex=master.master.ReadHoldingRegisters(master.slaveID, TableUsedforRegisters.diagnostik_send, 1); 
                     wating.Abort();
 
                     have_connection = true;
