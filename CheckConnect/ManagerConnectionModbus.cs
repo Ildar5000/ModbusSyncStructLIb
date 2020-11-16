@@ -104,8 +104,8 @@ namespace ModbusSyncStructLIb.CheckConnect
                 master.master.Transport.SlaveBusyUsesRetryCount = true;
                 master.master.Transport.WaitToRetryMilliseconds = 100;
                 master.master.Transport.Retries = 5;
-                master.master.Transport.WriteTimeout = 50;
-                master.master.Transport.ReadTimeout = 50;
+                //master.master.Transport.WriteTimeout = 50;
+                //master.master.Transport.ReadTimeout = 50;
                 crtime = (ushort)rand.Next(11,100);
             }
             catch (Exception ex)

@@ -32,7 +32,7 @@ namespace ModbusSyncStructLIb
         public SerialPortAdapter SerialPortAdapter;
         public ModbusSlave slave;
 
-        public ModbusTcpSlave modbusTcp;
+        //public ModbusTcpSlave modbusTcp;
         public TcpListener ListenerTCP;
 
         public double status_bar=0;
@@ -270,15 +270,23 @@ namespace ModbusSyncStructLIb
                 if (TypeModbus==2)
                 {
                     logger.Info("Создания modbus TCP");
-                    IPAddress address = IPAddress.Parse(IP_client);
-                    ListenerTCP = new TcpListener(address, IP_client_port);
-                    Thread thread = new Thread(ListenerTCP.Start);
+                    IPAddress address = IPAddress.Parse("192.168.49.171");
                     
+                    IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
+                    IPAddress[] addr = ipEntry.AddressList;
+
+                    //IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
+                    ListenerTCP = new TcpListener(address, IP_client_port);
+
+                    Thread thread = new Thread(ListenerTCP.Start);
+
+
                     thread.Start();
 
+                    slave = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP);
                     logger.Info("Slave подключен");
 
-                    slave = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP);
+                    
 
                     slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                     slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
@@ -616,12 +624,6 @@ namespace ModbusSyncStructLIb
                 slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
                 logger.Info("В регистр состояние" + slave.DataStore.HoldingRegisters[1]);
             }
-            if (modbusTcp!=null)
-            {
-                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
-                logger.Info("В регистр состояние" + modbusTcp.DataStore.HoldingRegisters[1]);
-            }
-
 
             logger.Info("Обработан первый инфопакет:");
             //writebyte(receivedpacket);
@@ -650,14 +652,6 @@ namespace ModbusSyncStructLIb
                     logger.Info("Получен серединный инфопакет");
                     //writebyte(receivedpacket);
                 }
-                if (modbusTcp!=null)
-                {
-                    //изменение состояние
-                    modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
-                    logger.Info("В регистр состояние" + modbusTcp.DataStore.HoldingRegisters[1]);
-                    logger.Info("Получен серединный инфопакет");
-                    //writebyte(receivedpacket);
-                }    
             }
             catch (Exception ex)
             {
@@ -755,11 +749,6 @@ namespace ModbusSyncStructLIb
                     slave.DataStore.HoldingRegisters[1] = SlaveState.havechecktotime;
                     logger.Info("В регистр состояние готов принимать пакеты" + slave.DataStore.HoldingRegisters[1]);
                 }
-                if (modbusTcp!=null)
-                {
-                    modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.havechecktotime;
-                    logger.Info("В регистр состояние готов принимать пакеты" + modbusTcp.DataStore.HoldingRegisters[1]);
-                }
 
                 all_get_packet = 0;
                 status_bar = 100;
@@ -828,13 +817,6 @@ namespace ModbusSyncStructLIb
                 Thread.Sleep(500);
                 update_after_error();
             }
-            if (modbusTcp != null)
-            {
-                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.haveerror;
-                logger.Error("Ошибка десеризация");
-                Thread.Sleep(1000);
-                update_after_error();
-            }
         }
 
         private void update_after_error()
@@ -842,11 +824,6 @@ namespace ModbusSyncStructLIb
             if (slave != null)
             {
                 slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                logger.Error("Востановление состояние");
-            }
-            if (modbusTcp != null)
-            {
-                modbusTcp.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                 logger.Error("Востановление состояние");
             }
         }

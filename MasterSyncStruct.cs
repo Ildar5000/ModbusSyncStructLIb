@@ -278,12 +278,15 @@ namespace ModbusSyncStructLIb
                 if ((TypeModbus == 2))
                 {
                     logger.Info("Создания modbus modbusIp");
-                    TcpClient client = new TcpClient(IP_client, IP_client_port);
+                    TcpClient client = new TcpClient();
+                    client.BeginConnect(IP_client, IP_client_port, null, null);
+
+
                     master = ModbusIpMaster.CreateIp(client);
 
-                    master.Transport.Retries = 1000;
-                    master.Transport.ReadTimeout = 1000;
-                    master.Transport.WriteTimeout = 1000;
+                    //master.Transport.Retries = 1000;
+                    //master.Transport.ReadTimeout = 1000;
+                    //master.Transport.WriteTimeout = 1000;
                 }
             }
             catch(Exception ex)
@@ -317,6 +320,11 @@ namespace ModbusSyncStructLIb
                 if (master != null)
                 {
                     master.Dispose();
+                   
+                }
+
+                if (serialPort!=null)
+                {
                     serialPort.Close();
                 }
             }
@@ -354,6 +362,10 @@ namespace ModbusSyncStructLIb
             if (master != null)
             {
                 status_slave = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+            }
+            else
+            {
+                return SlaveState.haveerror;
             }
 
             return status_slave[0];
@@ -484,8 +496,6 @@ namespace ModbusSyncStructLIb
             //write_console(date);
             //Console.WriteLine("");
 
-
-
             //конвертирует в ushort
             status_bar = 10;
             alltranferendpacket = 0;
@@ -554,11 +564,6 @@ namespace ModbusSyncStructLIb
                         if (master != null)
                         {
                             master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
-                        }
-
-                        if (masterTCP != null)
-                        {
-                            masterTCP.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
                         }
                         status_bar = 100;
                     }
