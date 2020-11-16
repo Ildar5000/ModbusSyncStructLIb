@@ -84,6 +84,12 @@ namespace ModbusSyncStructLIb
         double alltranferendpacket=0;
         #endregion
 
+        /// <summary>
+        /// Статус процесса
+        /// </summary>
+        public double status_bar = 0;
+
+
 
         #region init
 
@@ -300,10 +306,7 @@ namespace ModbusSyncStructLIb
             return alltranferendpacket;
         }
 
-        /// <summary>
-        /// Статус процесса
-        /// </summary>
-        public double status_bar = 0;
+
 
 
         public void close()
@@ -330,15 +333,8 @@ namespace ModbusSyncStructLIb
             ushort startAddress = 1;
             ushort numOfPoints = 10;
             ushort[] holding_register = {0};
-            if (TypeModbus==2)
-            {
-                holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
-            }
-            else
-            {
-                holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
-            }
-
+            
+            holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
             return holding_register;
         }
 
@@ -433,6 +429,7 @@ namespace ModbusSyncStructLIb
 
          
         }
+        
         /// <summary>
         /// Отправить данные
         /// </summary>
@@ -930,14 +927,7 @@ namespace ModbusSyncStructLIb
         public ushort read_single_message(ushort coilAddress)
         {
             ushort[] holding_register = { 0 };
-            if (TypeModbus == 2)
-            {
-                holding_register = masterTCP.ReadHoldingRegisters(slaveID, coilAddress, 0);
-            }
-            else
-            {
-                holding_register = master.ReadHoldingRegisters(slaveID, coilAddress, 0);
-            }
+            holding_register = masterTCP.ReadHoldingRegisters(slaveID, coilAddress, 0);
             return holding_register[0];
         }
 
@@ -962,12 +952,6 @@ namespace ModbusSyncStructLIb
                 {
                     master.WriteSingleRegister(slaveID, coilAddress, value);
                 }
-
-                if (masterTCP != null)
-                {
-                    masterTCP.WriteSingleRegister(slaveID, coilAddress, value);
-                }
-
             }
             catch(Exception ex)
             {
