@@ -270,7 +270,7 @@ namespace ModbusSyncStructLIb
                 if (TypeModbus==2)
                 {
                     logger.Info("Создания modbus TCP");
-                    IPAddress address = IPAddress.Parse("192.168.49.171");
+                    IPAddress address = IPAddress.Parse("127.0.0.1");
                     
                     IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
                     IPAddress[] addr = ipEntry.AddressList;
@@ -721,14 +721,24 @@ namespace ModbusSyncStructLIb
 
                 DateTime dataNowSlave = DateTime.Now;
 
-                if (dataNowSlave.CompareTo(metaClass.dateTime)<= check_deltatime)
+                System.TimeSpan delatatime = dataNowSlave - metaClass.dateTime;
+
+                if (check_deltatime>=500)
                 {
-                    SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);   // 2.Вызов события
+                    if (delatatime.TotalMilliseconds <= check_deltatime)
+                    {
+                        SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);   // 2.Вызов события
+                    }
+                    else
+                    {
+                        logger.Warn("Данные не актуальные, уточните дельту или данные пришло поздно");
+                    }
                 }
                 else
                 {
-                    logger.Warn("Данные не актуальные, уточните дельту или данные пришло поздно");
+                    SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);
                 }
+
                 
                 if (check_metaclassobj(metaClass))
                 {
