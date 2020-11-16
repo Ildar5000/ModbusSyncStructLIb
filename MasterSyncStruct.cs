@@ -44,7 +44,9 @@ namespace ModbusSyncStructLIb
         //Common settings
         int TypeModbus = 0;
         public byte slaveID=1;
-        
+
+        public bool try_reboot_connection = true;
+
         #region setting
         PropertiesSetting propertiesSetting;
         #endregion
@@ -114,6 +116,7 @@ namespace ModbusSyncStructLIb
                         logger.Info("Объект десериализован");
                     }
                     TypeModbus = settings.typeModbus;
+                    try_reboot_connection = settings.try_reboot_connection;
 
                     if (settings.typeModbus != 2)
                     {

@@ -117,31 +117,34 @@ namespace ModbusSyncStructLIb.CheckConnect
             {
                 try
                 {
-                    Thread wating = new Thread(new ParameterizedThreadStart(timeclick));
-                    wating.Start(crtime);
-
-                    master.master.WriteSingleRegister(master.slaveID, TableUsedforRegisters.diagnostik_send, crtime);
-                    logger.Trace("Cвязь присутствует");
-
-                    have_connection = true;
-                    Thread.Sleep(100);
-
-                    ushort[] getrex=master.master.ReadHoldingRegisters(master.slaveID, TableUsedforRegisters.diagnostik_send, 1); 
-                    wating.Abort();
-
-                    have_connection = true;
-                    if (crtime == getrex[0])
+                    if (master.try_reboot_connection==true)
                     {
-                        logger.Trace("Обратная связь присутствует");
+                        Thread wating = new Thread(new ParameterizedThreadStart(timeclick));
+                        wating.Start(crtime);
+
+                        master.master.WriteSingleRegister(master.slaveID, TableUsedforRegisters.diagnostik_send, crtime);
+                        logger.Trace("Cвязь присутствует");
+
+                        have_connection = true;
+                        Thread.Sleep(100);
+
+                        ushort[] getrex = master.master.ReadHoldingRegisters(master.slaveID, TableUsedforRegisters.diagnostik_send, 1);
+                        wating.Abort();
+
+                        have_connection = true;
+                        if (crtime == getrex[0])
+                        {
+                            logger.Trace("Обратная связь присутствует");
+                            crtime = (ushort)rand.Next(11, 100);
+                        }
+                        else
+                        {
+                            logger.Trace("Обратная связь отсутствует");
+                        }
                         crtime = (ushort)rand.Next(11, 100);
-                    }
-                    else
-                    {
-                        logger.Trace("Обратная связь отсутствует");
-                    }
-                    crtime = (ushort)rand.Next(11, 100);
 
-                    Thread.Sleep(2000);
+                        Thread.Sleep(2000);
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -178,20 +181,23 @@ namespace ModbusSyncStructLIb.CheckConnect
             {
                Console.WriteLine("work");
                Thread.Sleep(200);
-               if (crtime!= slave.randnumber)
+               if (slave.try_reboot_connection == true)
                {
-                    logger.Trace("Есть связь");
-                    crtime = slave.randnumber;
-                    have_connection = true;
-                    Thread.Sleep(5000);
-                    
-                }
-               else
-               {
-                    crtime = slave.randnumber;
-                    logger.Warn("Нету связи");
-                    have_connection = false;
-                    Thread.Sleep(5000);
+                    if (crtime != slave.randnumber)
+                    {
+                        logger.Trace("Есть связь");
+                        crtime = slave.randnumber;
+                        have_connection = true;
+                        Thread.Sleep(5000);
+
+                    }
+                    else
+                    {
+                        crtime = slave.randnumber;
+                        logger.Warn("Нету связи");
+                        have_connection = false;
+                        Thread.Sleep(5000);
+                    }
                 }
             }
         }

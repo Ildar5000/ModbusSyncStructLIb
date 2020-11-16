@@ -41,6 +41,8 @@ namespace ModbusSyncStructLIb
         bool connection_enanble = false;
         public ushort randnumber = 0;
 
+        public bool try_reboot_connection = true;
+
 
         int TypeModbus=0;
 
@@ -119,6 +121,7 @@ namespace ModbusSyncStructLIb
                     }
 
                     TypeModbus = settings.typeModbus;
+                    try_reboot_connection = settings.try_reboot_connection;
 
                     if (settings.typeModbus != 2)
                     {
