@@ -16,14 +16,14 @@ namespace ModbusSyncStructLIb.EvenBase
 
         public QueueOfSentMessagesForSlave()
         {
-            Thread thread = new Thread(recursve);
+            Thread thread = new Thread(Recursve);
             thread.Start();
         }
 
         public QueueOfSentMessagesForSlave(MasterSyncStruct m_master)
         {
             this.master = m_master;
-            Thread thread = new Thread(recursve);
+            Thread thread = new Thread(Recursve);
             thread.Start();
         }
 
@@ -38,24 +38,24 @@ namespace ModbusSyncStructLIb.EvenBase
         /// <summary>
         /// добавлен в очереди
         /// </summary>
-        public void add_queue(MemoryStream message)
+        public void AddQueue(MemoryStream message)
         {
             numbers.Enqueue(message);
             count++;
 
         } 
 
-        public void send()
+        public void Send()
         {
             if (count!=0)
             {
                 MemoryStream memory = numbers.Dequeue();
-                master.send_multi_message(memory);
+                master.SendMultiMessage(memory);
                 count--;
             }
         }
 
-        public void stoptransfer()
+        public void StopTransfer()
         {
             try
             {
@@ -74,23 +74,32 @@ namespace ModbusSyncStructLIb.EvenBase
         }
 
 
-        public void recursve()
+        public void Recursve()
         {
             while(true)
             {
                 if (count!=0 )
                 {
-                    if (master.state_master == 0 && numbers.Count!=0)
+                    if (master.stoptransfer_signal==true)
                     {
-                        MemoryStream memory = numbers.Dequeue();
-                        master.send_multi_message(memory);
-                        count--;
+                        numbers.Clear();
+                        count = 0;
+                        master.stoptransfer_signal = false;
                     }
-                    //Случий с ошибкой на мастере
-                    if (master.state_master==1)
+                    else
                     {
-                        clear_queue();
-                        master.state_master = 0;
+                        if (master.state_master == 0 && numbers.Count != 0)
+                        {
+                            MemoryStream memory = numbers.Dequeue();
+                            master.SendMultiMessage(memory);
+                            count--;
+                        }
+                        //Случий с ошибкой на мастере
+                        if (master.state_master == 1)
+                        {
+                            clear_queue();
+                            master.state_master = 0;
+                        }
                     }
                 }
             }

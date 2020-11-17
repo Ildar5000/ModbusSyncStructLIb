@@ -43,7 +43,6 @@ namespace ModbusSyncStructLIb
 
         public bool try_reboot_connection = true;
 
-
         int TypeModbus=0;
 
         private static Logger logger;
@@ -55,6 +54,8 @@ namespace ModbusSyncStructLIb
         public delegate void SignalFormedMetaClassMethodAll(MetaClassForStructandtherdata metaClassall);
         public event SignalFormedMetaClassMethodAll SignalFormedMetaClassAll;
         #endregion
+
+        public bool have_trasfer=false;
 
         /// <summary>
         /// Кол-во пакетов в одном запросе
@@ -293,6 +294,8 @@ namespace ModbusSyncStructLIb
 
                     slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                     slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
+                    
+                    slave.DataStore.HoldingRegisters[1] = 0;
 
                     Task listenTask= slave.ListenAsync();
                     logger.Info("Slave Ожидание");
@@ -312,7 +315,7 @@ namespace ModbusSyncStructLIb
         #endregion
 
 
-        public void close()
+        public void Close()
         {
             if (slave!=null)
             {
@@ -411,22 +414,34 @@ namespace ModbusSyncStructLIb
 
                     if (e.Data.B.Count > 2)
                     {
+                        have_trasfer = true;
                         if (slave!=null)
                         {
-                            //Console.WriteLine("Пришел пакет с данными:");
-                            logger.Info("Пришел пакет с данными:");
-                            for (int i = 0; i < e.Data.B.Count; i++)
+                            if (slave.DataStore.HoldingRegisters[1]!= SlaveState.haveusercanceltransfer)
                             {
-                                receive_packet_data[i] = e.Data.B[i];
-                                //Console.Write(receive_packet_data[i] + " ");
-                            }
-                            Console.WriteLine("");
-                            logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
-                            slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+                                //Console.WriteLine("Пришел пакет с данными:");
+                                logger.Info("Пришел пакет с данными:");
+                                for (int i = 0; i < e.Data.B.Count; i++)
+                                {
+                                    receive_packet_data[i] = e.Data.B[i];
+                                    //Console.Write(receive_packet_data[i] + " ");
+                                }
+                                Console.WriteLine("");
+                                logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
+                                slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
 
-                            //Console.WriteLine("Обработка пакета");
-                            logger.Info("Обработка пакета");
-                            processing_infopaket(receive_packet_data);
+                                //Console.WriteLine("Обработка пакета");
+                                logger.Info("Обработка пакета");
+                                ProcessingInfopaket(receive_packet_data);
+                            }
+                            else
+                            {
+                                slave.DataStore.HoldingRegisters[TableUsedforRegisters.StateSlaveRegisters] = SlaveState.haveusercanceltransfer;
+                                Thread.Sleep(200);
+
+                                slave.DataStore.HoldingRegisters[TableUsedforRegisters.StateSlaveRegisters] = SlaveState.have_free_time;
+                            }
+
                         }
                     }                  
 
@@ -450,7 +465,7 @@ namespace ModbusSyncStructLIb
         {
             if (randnumber!=v)
             {
-                logger.Trace("Связь присутствует");
+                // logger.Trace("Связь присутствует");
                 randnumber = v;
             }
             randnumber = v;
@@ -468,7 +483,7 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Пользователь отменил посылку");
 
-                    slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                    //slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                     //update_after_error();
                 }
 
@@ -563,46 +578,51 @@ namespace ModbusSyncStructLIb
         /// <summary>
         /// обработка статусов
         /// </summary>
-        private void processing_infopaket(ushort[] date)
+        private void ProcessingInfopaket(ushort[] date)
         {
-            Console.WriteLine("Обработка инфопакета Slave занят:");
-            Console.WriteLine("Обработка инфопакета:");
-            //перводим в массив байт
-            Buffer.BlockCopy(date, 0, receivedpacket, 0, receivedpacket.Length);
+            try
+            {
+                Console.WriteLine("Обработка инфопакета Slave занят:");
+                Console.WriteLine("Обработка инфопакета:");
+                //перводим в массив байт
+                Buffer.BlockCopy(date, 0, receivedpacket, 0, receivedpacket.Length);
 
+                countrecivedcount += receivedpacket.Length;
+                Console.WriteLine("Получено:" + countDataStructUsshort);
 
+                // о статусах
+
+                all_get_packet += date.Length * 2;
+
+                double countpacket = (countDataStruct / 2) / count_send_packet;
+
+                statusbar_value_repeat = 100 / countpacket;
+
+                if (countrecivedcount > countDataStruct)
+                {
+                    processing_infopaket_endl();
+                }
+                // начало
+                if (countrecivedcount == receivedpacket.Length)
+                {
+                    processing_infopaket_inception();
+
+                    status_bar += statusbar_value_repeat;
+                }
+
+                if (countrecivedcount > receivedpacket.Length && countrecivedcount < countDataStruct)
+                {
+                    processing_infopaket_middle();
+                    status_bar += statusbar_value_repeat;
+                }
+                Console.WriteLine("Переданно " + countrecivedcount);
+            }
+            catch(Exception ex)
+            {
+                logger.Error(ex);
+                have_trasfer = false;
+            }
             
-
-
-            countrecivedcount += receivedpacket.Length;
-            Console.WriteLine("Получено:" + countDataStructUsshort);
-
-            // о статусах
-
-            all_get_packet += date.Length*2;
-
-            double countpacket = (countDataStruct/2) / count_send_packet;
-
-            statusbar_value_repeat = 100 / countpacket;
-
-            if (countrecivedcount > countDataStruct)
-            {
-                processing_infopaket_endl();
-            }
-            // начало
-            if (countrecivedcount == receivedpacket.Length)
-            {
-                processing_infopaket_inception();
-
-                status_bar += statusbar_value_repeat;
-            }
-
-            if (countrecivedcount > receivedpacket.Length && countrecivedcount < countDataStruct)
-            {
-                processing_infopaket_middle();
-                status_bar += statusbar_value_repeat;
-            }
-            Console.WriteLine("Переданно " + countrecivedcount);
         }
 
         #endregion
@@ -711,7 +731,7 @@ namespace ModbusSyncStructLIb
         private void Сlass_Deserialization(byte[] date)
         {
             try
-            {            
+            {
                 logger.Info("Формирование класса:");
 
                 Stream stream = new MemoryStream(date);
@@ -765,10 +785,11 @@ namespace ModbusSyncStructLIb
 
                 all_get_packet = 0;
                 status_bar = 100;
-
+                have_trasfer = false;
             }
             catch (Exception ex)
             {
+                have_trasfer = false;
                 logger.Error(ex);
                 //have_error_for_deseration();
                 Console.WriteLine(ex);
@@ -783,7 +804,7 @@ namespace ModbusSyncStructLIb
                 BinaryFormatter formatter = new BinaryFormatter();
                 logger.Info("Декомпрессия");
 
-                MemoryStream memory =decompress(stream,false);
+                MemoryStream memory =Decompress(stream,false);
                 byte[] class_outdecompress = memory.ToArray();
 
                 
@@ -794,6 +815,7 @@ namespace ModbusSyncStructLIb
             }
             catch(Exception ex)
             {
+                have_trasfer = false;
                 //have_error_for_deseration();
                 logger.Error(ex);
             }
@@ -894,7 +916,7 @@ namespace ModbusSyncStructLIb
         };
 
 
-        public MemoryStream compress(MemoryStream inStream, bool closeInStream)
+        public MemoryStream Compress(MemoryStream inStream, bool closeInStream)
         {
             inStream.Position = 0;
             Int64 fileSize = inStream.Length;
@@ -919,7 +941,7 @@ namespace ModbusSyncStructLIb
         }
 
 
-        public MemoryStream decompress(MemoryStream inStream, bool closeInStream)
+        public MemoryStream Decompress(MemoryStream inStream, bool closeInStream)
         {
             inStream.Position = 0;
             MemoryStream outStream = new MemoryStream();
@@ -955,6 +977,21 @@ namespace ModbusSyncStructLIb
         }
 
         #endregion
+
+        public void stoptransfer()
+        {
+            if (slave!=null&& have_trasfer==true)
+            {
+                slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
+
+                logger.Warn("Пользователь отменил передачу");
+
+                Thread.Sleep(300);
+                slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                have_trasfer = false;
+            }
+        }
+
 
     }
 }
