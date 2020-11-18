@@ -30,7 +30,7 @@ namespace ModbusSyncStructLIb.EvenBase
         /// <summary>
         /// Очистка очереди
         /// </summary>
-        public void clear_queue()
+        public void ClearQueue()
         {
             numbers.Clear();
         }
@@ -61,8 +61,8 @@ namespace ModbusSyncStructLIb.EvenBase
             {
                 if (master!=null)
                 {
-                    master.stoptransfer();
-                    clear_queue();
+                    master.StopTransfer();
+                    ClearQueue();
                 }
             }
             catch(Exception ex)
@@ -97,7 +97,7 @@ namespace ModbusSyncStructLIb.EvenBase
                         //Случий с ошибкой на мастере
                         if (master.state_master == 1)
                         {
-                            clear_queue();
+                            ClearQueue();
                             master.state_master = 0;
                         }
                     }

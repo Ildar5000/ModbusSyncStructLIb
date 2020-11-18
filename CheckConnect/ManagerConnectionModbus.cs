@@ -41,7 +41,7 @@ namespace ModbusSyncStructLIb.CheckConnect
         }
 
 
-        public void stop()
+        public void Stop()
         {
             if (master.master!=null)
             {
@@ -55,32 +55,32 @@ namespace ModbusSyncStructLIb.CheckConnect
             }
             if (islive==true)
             {
-                restart();
+                Restart();
             }
         }
 
-        public void restart()
+        public void Restart()
         {
             Thread.Sleep(1000);
-            start();
+            Start();
         }
 
 
-        public void start()
+        public void Start()
         {
             if (master!=null)
             {
-                masterstart();
+                MasterStart();
             }
 
             if (slave != null)
             {
-                slavestart();
+                SlaveStart();
             }
 
         }
 
-        public void timeclick(object date)
+        public void TimeWaitResponses(object date)
         {
             ushort dateold = (ushort)date;
             Thread.Sleep(200);
@@ -92,7 +92,7 @@ namespace ModbusSyncStructLIb.CheckConnect
             
         }
 
-        public void masterstart()
+        public void MasterStart()
         {
             try
             {
@@ -105,7 +105,7 @@ namespace ModbusSyncStructLIb.CheckConnect
             catch (Exception ex)
             {
                 logger.Error(ex);
-                stop();
+                Stop();
             }
             while (islive)
             {
@@ -113,7 +113,7 @@ namespace ModbusSyncStructLIb.CheckConnect
                 {
                     if (master.try_reboot_connection==true)
                     {
-                        Thread wating = new Thread(new ParameterizedThreadStart(timeclick));
+                        Thread wating = new Thread(new ParameterizedThreadStart(TimeWaitResponses));
                         wating.Start(crtime);
 
                         master.master.WriteSingleRegister(master.slaveID, TableUsedforRegisters.diagnostik_send, crtime);
@@ -146,7 +146,7 @@ namespace ModbusSyncStructLIb.CheckConnect
                 catch (Exception ex)
                 {
                     have_connection = false;
-                    stop();
+                    Stop();
                     have_connection = false;
                     Thread.Sleep(2000);
 
@@ -163,7 +163,7 @@ namespace ModbusSyncStructLIb.CheckConnect
             }
         }
 
-        public void slavestart()
+        public void SlaveStart()
         {
             try
             {
@@ -199,7 +199,7 @@ namespace ModbusSyncStructLIb.CheckConnect
             }
         }
 
-        public void closeManager()
+        public void CloseManager()
         {
             islive = false;
         }

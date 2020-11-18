@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace ModbusSyncStructLIb
 {
     [Serializable]
-    public class MetaClassForStructandtherdata
+    public class MetaClassForStructAndtherData
     {
         public object struct_which_need_transfer { get; set; }
 
@@ -32,7 +32,7 @@ namespace ModbusSyncStructLIb
 
 
 
-        public MetaClassForStructandtherdata(string txt)
+        public MetaClassForStructAndtherData(string txt)
         {
             struct_which_need_transfer = txt;
             type = txt.GetType();
@@ -40,7 +40,7 @@ namespace ModbusSyncStructLIb
         }
 
 
-        public MetaClassForStructandtherdata(object txt)
+        public MetaClassForStructAndtherData(object txt)
         {
             struct_which_need_transfer = txt;
             if (txt.GetType()!=null)
@@ -53,7 +53,7 @@ namespace ModbusSyncStructLIb
             dateTime = DateTime.Now;
         }
 
-        public MetaClassForStructandtherdata(object txt,bool is_file, string name_file,object metattributes,DateTime CreationTime_file,DateTime LastWriteTime)
+        public MetaClassForStructAndtherData(object txt,bool is_file, string name_file,object metattributes,DateTime CreationTime_file,DateTime LastWriteTime)
         {
             struct_which_need_transfer = txt;
             if (txt.GetType() != null)
@@ -70,7 +70,7 @@ namespace ModbusSyncStructLIb
 
         }
 
-        public MetaClassForStructandtherdata()
+        public MetaClassForStructAndtherData()
         {
         }
     }

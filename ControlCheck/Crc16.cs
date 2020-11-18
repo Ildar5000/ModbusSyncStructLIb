@@ -10,7 +10,12 @@ namespace ModbusSyncStructLIb.ControlCheck
     {
         const ushort polynomial = 0xA001;
         ushort[] table = new ushort[256];
-
+        
+        /// <summary>
+        /// Расчет суммы
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
         public ushort ComputeChecksum(byte[] bytes)
         {
             ushort crc = 0;
@@ -22,6 +27,11 @@ namespace ModbusSyncStructLIb.ControlCheck
             return crc;
         }
 
+        // <summary>
+        /// Сумма контролььная финальная
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
         public byte[] ComputeChecksumBytes(byte[] bytes)
         {
             ushort crc = ComputeChecksum(bytes);
@@ -51,8 +61,15 @@ namespace ModbusSyncStructLIb.ControlCheck
                 table[i] = value;
             }
         }
-
-        public ushort convertoshort(byte[] date)
+        
+        
+        /// <summary>
+        /// Конвертирует в ushort
+        /// </summary>
+        /// <param name="date"></param>
+        /// <returns></returns>
+        
+        public ushort ConverToShort(byte[] date)
         {
             ushort[] date_modbus=new ushort[1];
             Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);
