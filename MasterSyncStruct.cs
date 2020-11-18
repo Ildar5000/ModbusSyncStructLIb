@@ -500,7 +500,7 @@ namespace ModbusSyncStructLIb
                     sentpacket_second1[0] = (ushort)count;
                     sentpacket_second1[1] = (ushort)(count >> 16);
                     status_bar = 20;
-                    sendBigDataForMaster(coilAddress, sentpacket_second1);
+                    SendBigDataForMaster(coilAddress, sentpacket_second1);
                     logger.Info("Отправлено sentpacket" + sentpacket_second1[0]+"и" +sentpacket_second1[1]+"в ushort");
 
                 }
@@ -534,7 +534,7 @@ namespace ModbusSyncStructLIb
             }
         }
 
-        private void sendBigDataForMaster(ushort coilAddress, ushort[] sentpacket)
+        private void SendBigDataForMaster(ushort coilAddress, ushort[] sentpacket)
         {
             if (master != null)
             {
