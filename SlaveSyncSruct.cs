@@ -275,7 +275,7 @@ namespace ModbusSyncStructLIb
                 if (TypeModbus==2)
                 {
                     logger.Info("Создания modbus TCP");
-                    IPAddress address = IPAddress.Parse("127.0.0.1");
+                    IPAddress address = IPAddress.Parse(IP_client);
                     
                     IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
                     IPAddress[] addr = ipEntry.AddressList;

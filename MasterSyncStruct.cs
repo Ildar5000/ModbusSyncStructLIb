@@ -317,7 +317,6 @@ namespace ModbusSyncStructLIb
             {
                 return 0;
             }
-            return 0;
         }
         
         /// <summary>
@@ -339,12 +338,14 @@ namespace ModbusSyncStructLIb
                 StopTransfer();
                 if (master != null)
                 {
+                    logger.Warn("Остановлен мастер");
                     master.Dispose();
                    
                 }
 
                 if (serialPort!=null)
                 {
+                    logger.Warn("Закрыт порт");
                     serialPort.Close();
                 }
             }
@@ -500,12 +501,15 @@ namespace ModbusSyncStructLIb
                     sentpacket_second1[1] = (ushort)(count >> 16);
                     status_bar = 20;
                     sendBigDataForMaster(coilAddress, sentpacket_second1);
+                    logger.Info("Отправлено sentpacket" + sentpacket_second1[0]+"и" +sentpacket_second1[1]+"в ushort");
 
                 }
                 else
                 {
                     ushort sentpacket = Convert.ToUInt16(count);
                     status_bar = 20;
+
+                    logger.Info("Отправлено sentpacket" + sentpacket + "в ushort");
                     SendDataForMaster(coilAddress, sentpacket);
                 }
             }
@@ -702,7 +706,7 @@ namespace ModbusSyncStructLIb
                 //если пользователь отменил передачу
                 if (stoptransfer_signal == true)
                 {
-                    logger.Info("Пользователь отменил передачу");
+                    logger.Warn("Пользователь отменил передачу");
                     status_bar = 100;
                     SendSingleMessage(SlaveState.haveusercanceltransfer, TableUsedforRegisters.StateSlaveRegisters);
                     SendSingleMessage(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters);
@@ -722,7 +726,7 @@ namespace ModbusSyncStructLIb
 
                 if   (status_slave == SlaveState.haveusercanceltransfer)
                 {
-                    logger.Info("Пользователь отменил передачу у Slave");
+                    logger.Warn("Пользователь отменил передачу у Slave");
                     stoptransfer_signal = true;
                     status_bar = 100;
                     SendSingleMessage(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters); 
@@ -838,8 +842,6 @@ namespace ModbusSyncStructLIb
             
             //вывод в консоль
             //write_console(sentpacket);
-
-            logger.Trace("Отправка данных");
 
             //если slave свободен то отправляем
             if (master != null)
