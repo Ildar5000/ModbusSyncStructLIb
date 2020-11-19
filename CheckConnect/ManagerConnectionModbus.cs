@@ -11,10 +11,12 @@ namespace ModbusSyncStructLIb.CheckConnect
 {
     public class ManagerConnectionModbus
     {
-        MasterSyncStruct master;
-        Logger logger;
+        public MasterSyncStruct master;
+        public SlaveSyncSruct slave;
 
-        SlaveSyncSruct slave;
+        public int deltatime=2000;
+
+        Logger logger;
 
         bool islive = true;
         public bool have_connection = false;
@@ -27,6 +29,7 @@ namespace ModbusSyncStructLIb.CheckConnect
         {
             logger = LogManager.GetCurrentClassLogger();
 
+            deltatime = master.deltaTimeCheck;
             this.master = master;
             rand = new Random();
         }
@@ -34,7 +37,7 @@ namespace ModbusSyncStructLIb.CheckConnect
         public ManagerConnectionModbus(SlaveSyncSruct slave)
         {
             logger = LogManager.GetCurrentClassLogger();
-
+            deltatime = slave.deltaTimeCheck;
             this.slave = slave;
 
             rand = new Random();
@@ -43,6 +46,8 @@ namespace ModbusSyncStructLIb.CheckConnect
 
         public void Stop()
         {
+            have_connection = false;
+
             if (master.master!=null)
             {
                 master.Close();
@@ -140,7 +145,7 @@ namespace ModbusSyncStructLIb.CheckConnect
                         }
                         crtime = (ushort)rand.Next(11, 100);
 
-                        Thread.Sleep(2000);
+                        Thread.Sleep(deltatime);
                     }
                 }
                 catch (Exception ex)
@@ -184,13 +189,13 @@ namespace ModbusSyncStructLIb.CheckConnect
                         crtime = slave.randnumber;
                         have_connection = true;
                         //logger.Trace("Есть связь между slave и master");
-                        Thread.Sleep(5000);
+                        Thread.Sleep(deltatime);
                     }
                     else
                     {
                         crtime = slave.randnumber;
                         have_connection = false;
-                        Thread.Sleep(5000);
+                        Thread.Sleep(deltatime);
 
                         //logger.Warn("Нету связи");
 
