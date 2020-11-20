@@ -400,7 +400,7 @@ namespace ModbusSyncStructLIb
                                 {
                                     logger.Info("Перешел в состояние " + e.Data.B[0] + " Отмена");
                                     slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
-
+                                    have_trasfer = false;
                                     ProcessingSingleregx(e.Data.B[0]);
                                     
                                 }
