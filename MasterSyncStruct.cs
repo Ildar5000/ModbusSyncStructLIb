@@ -94,7 +94,7 @@ namespace ModbusSyncStructLIb
         /// </summary>
         public double status_bar = 0;
 
-
+        double status_bar_temp = 0;
 
         #region init
 
@@ -495,8 +495,10 @@ namespace ModbusSyncStructLIb
             //ushort sentpacket = Convert.ToUInt16(count);
             //ushort sentpacket_second = Convert.ToUInt16(count);
 
-            if (count<2097152)
+            if (count<2147483647)
             {
+                //2147483647
+                //2147483647
                 if (count > 60000)
                 {
                     ushort[] sentpacket_second1 = new ushort[2];
@@ -588,7 +590,7 @@ namespace ModbusSyncStructLIb
             //Вывод данных
             //write_console(date_modbus);
 
-            byte[] date_unpack = new byte[date.Length];
+            //byte[] date_unpack = new byte[date.Length];
 
             /* перевод из байтов в юшорт
             Buffer.BlockCopy(date_modbus, 0, date_unpack, 0, date.Length);
@@ -627,7 +629,7 @@ namespace ModbusSyncStructLIb
                     
                     if (date_modbus.Length > count_send_packet)
                     {
-                        MoreThanTransfer(coilAddress,date_modbus, count_send_packet,sentpacket,date);
+                        MoreThanTransfer(coilAddress,date_modbus, count_send_packet);
 
                     }
                     else    //в случае если пакет меньше чем ограничения
@@ -697,15 +699,15 @@ namespace ModbusSyncStructLIb
         /// <summary>
         /// функция где объем больше чем пакете
         /// </summary>
-        private void MoreThanTransfer(ushort coilAddress,ushort[] date_modbus, int count_send_packet, ushort[] sentpacket, byte[] date)
+        private void MoreThanTransfer(ushort coilAddress,ushort[] date_modbus, int count_send_packet)
         {
             int countneedsend = (date_modbus.Length / count_send_packet) + 1;
             int k = 0;
             //Console.WriteLine("Будет отправлено " + countneedsend + " пакетов");
             logger.Info("Будет отправлено " + countneedsend + " пакетов");
 
-            double status_bar_temp = 100 / Convert.ToDouble(countneedsend);
-
+            status_bar_temp = 100 / Convert.ToDouble(countneedsend);
+            int type_message = 0;
             //кол-во отправок
             for (int i = 0; i < countneedsend; i++)
             {
@@ -729,32 +731,67 @@ namespace ModbusSyncStructLIb
                     status_bar = 0;
                     return;
                 }
+                status_slave = SendRequestForStatusSlave();
+                if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
+                {
+                    sendtypepacket(coilAddress, date_modbus, date, i, countneedsend);
+                }
+                 else
+                {
+                    int count= 0;
+                    MoreThanTransferRepet(coilAddress, date_modbus, date, i, count, countneedsend);
+                    if (state_master==1)
+                    {
+                        break;
+                    }
+
+                }
+            }
+        }
+
+
+        private void MoreThanTransferRepet(ushort coilAddress, ushort[] date_modbus, byte[] date,int i,int count,int countneedsend)
+        {
+            Thread.Sleep(500);
+            if (count==3)
+            {
+                logger.Error("Ошибка");
+                state_master = 1;
+                return;
+            }
+            else
+            {
+                status_slave = SendRequestForStatusSlave();
+                logger.Info("Попытка номер "+ count);
 
                 if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
                 {
-                    //окончание передачи
-                    if (countneedsend - 1 == i)
-                    {
-                        status_bar += status_bar_temp;
-                        EndPacketTrasferSend(i, k, coilAddress, count_send_packet, date_modbus, sentpacket, date);
-                    }
-                    else
-                    {
-                        status_bar += status_bar_temp;
-                        OtherPacketTrasferSend(i, k, coilAddress, count_send_packet, date_modbus, sentpacket, date);
-                    }
-
-                    // о статусе
-                    alltranferendpacket += sentpacket.Length*2;
+                    sendtypepacket(coilAddress, date_modbus, date, i, countneedsend);
                 }
                 else
                 {
-                    SendSingleMessage(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters);
-
-                    logger.Trace("Slave занят: Передача отменена");
-                    return;
+                    MoreThanTransferRepet(coilAddress, date_modbus, date, i, count, countneedsend);
                 }
+                count++;
             }
+        }
+
+        private void sendtypepacket(ushort coilAddress, ushort[] date_modbus, byte[] date,int i,int countneedsend)
+        {
+                //окончание передачи
+                if (countneedsend - 1 == i)
+                {
+                    status_bar += status_bar_temp;
+                    EndPacketTrasferSend(i, coilAddress, date_modbus, date);
+                }
+                else
+                {
+                    status_bar += status_bar_temp;
+                    OtherPacketTrasferSend(i, coilAddress, date_modbus, date);
+                }
+
+                // о статусе
+                alltranferendpacket += sentpacket.Length * 2;
         }
 
         /// <summary>
@@ -767,10 +804,13 @@ namespace ModbusSyncStructLIb
         /// <param name="date_modbus"></param>
         /// <param name="sentpacket"></param>
         /// <param name="date"></param>
-        private void EndPacketTrasferSend(int i,int k, ushort coilAddress, int count_send_packet, ushort[] date_modbus, ushort[] sentpacket, byte[] date)
+        private void EndPacketTrasferSend(int i, ushort coilAddress, ushort[] date_modbus, byte[] date)
         {
+            int k = 0;
             //Console.WriteLine("Отправка " + i + " пакета");
             logger.Trace("Отправка " + i + " пакета");
+            int count_send_packet = TableUsedforRegisters.count_packet;
+            sentpacket = new ushort[TableUsedforRegisters.count_packet];
             for (int j = i * count_send_packet; j < date_modbus.Length; j++)
             {
                 sentpacket[k] = date_modbus[j];
@@ -814,8 +854,12 @@ namespace ModbusSyncStructLIb
         /// <param name="date_modbus"></param>
         /// <param name="sentpacket"></param>
         /// <param name="date"></param>
-        private void OtherPacketTrasferSend(int i, int k, ushort coilAddress, int count_send_packet, ushort[] date_modbus, ushort[] sentpacket, byte[] date)
+        private void OtherPacketTrasferSend(int i, ushort coilAddress, ushort[] date_modbus, byte[] date)
         {
+            int k = 0;
+            sentpacket = new ushort[TableUsedforRegisters.count_packet];
+            int count_send_packet = TableUsedforRegisters.count_packet;
+
             //Console.WriteLine("Отправка " + i + " пакета");
             logger.Trace("Отправка " + i + " пакета");
             for (int j = i * count_send_packet; j < (i + 1) * count_send_packet; j++)
@@ -856,7 +900,7 @@ namespace ModbusSyncStructLIb
         /// </summary>
         /// <param name="stream">объект</param>
         /// <param name="count">кол-во попыток</param>
-        public void RepeatTrySend(MemoryStream stream,int count_try_recurs)
+        public void RepeatTrySend(MemoryStream stream,int count_try_recurs) 
         {
             //если пользователь отменил передачу
             if (stoptransfer_signal == true)
@@ -928,8 +972,8 @@ namespace ModbusSyncStructLIb
                         //если данные больше чем переданных
                         if (date_modbus.Length > count_send_packet)
                         {
-                            MoreThanTransfer(coilAddress, date_modbus, count_send_packet, sentpacket, date);
-                            
+                            MoreThanTransfer(coilAddress, date_modbus, count_send_packet);
+
                             state_master = 0;
                             logger.Info("Попытка передачи " + count_try_recurs + "Удачное");
                             return;

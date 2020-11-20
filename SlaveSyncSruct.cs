@@ -561,7 +561,7 @@ namespace ModbusSyncStructLIb
                     if (v[0] > 70)
                     {
                         int seconddate= Convert.ToInt32(v[1]);
-                        countDataStruct = Convert.ToInt32(v[0]);
+                        //countDataStruct = Convert.ToInt32(v[0]);
                         int back = (v[1] << 16) | v[0];
                         countDataStruct = back;
 
@@ -812,6 +812,8 @@ namespace ModbusSyncStructLIb
                 have_trasfer = false;
                 //have_error_for_deseration();
                 logger.Error(ex);
+                UpdateAfteError();
+
             }
         }
 
