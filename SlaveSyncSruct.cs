@@ -343,7 +343,7 @@ namespace ModbusSyncStructLIb
 
                 logger.Warn("Пользователь отменил передачу");
 
-                Thread.Sleep(300);
+                Thread.Sleep(400);
                 slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                 have_trasfer = false;
             }

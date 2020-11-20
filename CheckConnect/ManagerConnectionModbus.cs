@@ -16,6 +16,8 @@ namespace ModbusSyncStructLIb.CheckConnect
 
         public int deltatime=2000;
 
+        public int deltatimeSlave = 2100;
+
         Logger logger;
 
         bool islive = true;
@@ -30,6 +32,7 @@ namespace ModbusSyncStructLIb.CheckConnect
             logger = LogManager.GetCurrentClassLogger();
 
             deltatime = master.deltaTimeCheck;
+            deltatimeSlave = deltatime + 100;
             this.master = master;
             rand = new Random();
         }
@@ -38,6 +41,7 @@ namespace ModbusSyncStructLIb.CheckConnect
         {
             logger = LogManager.GetCurrentClassLogger();
             deltatime = slave.deltaTimeCheck;
+            deltatimeSlave = deltatime + 100;
             this.slave = slave;
 
             rand = new Random();
@@ -189,13 +193,13 @@ namespace ModbusSyncStructLIb.CheckConnect
                         crtime = slave.randnumber;
                         have_connection = true;
                         //logger.Trace("Есть связь между slave и master");
-                        Thread.Sleep(deltatime);
+                        Thread.Sleep(deltatimeSlave);
                     }
                     else
                     {
                         crtime = slave.randnumber;
                         have_connection = false;
-                        Thread.Sleep(deltatime);
+                        Thread.Sleep(deltatimeSlave);
 
                         //logger.Warn("Нету связи");
 

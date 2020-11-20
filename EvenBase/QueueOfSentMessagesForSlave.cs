@@ -84,6 +84,7 @@ namespace ModbusSyncStructLIb.EvenBase
                     {
                         numbers.Clear();
                         count = 0;
+                        Thread.Sleep(100);
                         master.stoptransfer_signal = false;
                     }
                     else

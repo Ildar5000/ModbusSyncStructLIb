@@ -80,7 +80,7 @@ namespace ModbusSyncStructLIb
 
         public TimeSpan elapsedSpan;
 
-        public bool falltransfer=false;
+        
 
         byte[] date;
         ushort[] sentpacket;
@@ -555,8 +555,6 @@ namespace ModbusSyncStructLIb
             status_bar = 0;
             havetrasfer = true;
             stoptransfer_signal = false;
-            falltransfer = false;
-
 
             logger.Info("Изменения структуры и подготовка к передачи");
             //Мастер занят
@@ -645,11 +643,24 @@ namespace ModbusSyncStructLIb
                         }
                     }
 
-                    havetrasfer = false;
-                    ellapledTicks = DateTime.Now.Ticks - ellapledTicks;
-                    elapsedSpan = new TimeSpan(ellapledTicks);
+                    if (stoptransfer_signal==true)
+                    {
+                        logger.Info("Передача отменена");
+                        stoptransfer_signal = false;
+                        havetrasfer = false;
+                        return;
+                    }
+                    else
+                    {
+                        ellapledTicks = DateTime.Now.Ticks - ellapledTicks;
+                        elapsedSpan = new TimeSpan(ellapledTicks);
 
-                    logger.Info("Передан за " + elapsedSpan.TotalSeconds + "Секунд");
+                        logger.Info("Передан за " + elapsedSpan.TotalSeconds + "Секунд");
+                        stoptransfer_signal = false;
+                    }
+
+                    havetrasfer = false;
+                    
 
                 }
                 else  //В случае если не получено данные
@@ -664,7 +675,7 @@ namespace ModbusSyncStructLIb
             }
             catch(Exception ex)
             {
-                falltransfer = true;
+                stoptransfer_signal = true;
                 Console.WriteLine(ex);
                 logger.Error(ex);
                 logger.Error("Не удалось отправить данные");
@@ -716,9 +727,7 @@ namespace ModbusSyncStructLIb
                     logger.Warn("Пользователь отменил передачу у Slave");
                     stoptransfer_signal = true;
                     status_bar = 0;
-                    SendSingleMessage(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters); 
                     return;
-                    
                 }
 
                 if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
@@ -740,6 +749,8 @@ namespace ModbusSyncStructLIb
                 }
                 else
                 {
+                    SendSingleMessage(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters);
+
                     logger.Trace("Slave занят: Передача отменена");
                     return;
                 }
@@ -812,7 +823,17 @@ namespace ModbusSyncStructLIb
                 sentpacket[k] = date_modbus[j];
                 k++;
             }
-            
+
+            status_slave = SendRequestForStatusSlave();
+
+            if (status_slave == SlaveState.haveusercanceltransfer)
+            {
+                logger.Warn("Пользователь отменил передачу у Slave");
+                stoptransfer_signal = true;
+                status_bar = 0;
+                return;
+            }
+
             //вывод в консоль
             //write_console(sentpacket);
 
@@ -841,6 +862,16 @@ namespace ModbusSyncStructLIb
             if (stoptransfer_signal == true)
             {
                 logger.Info("Пользователь отменил передачу");
+                return;
+            }
+
+            status_slave = SendRequestForStatusSlave();
+
+            if (status_slave == SlaveState.haveusercanceltransfer)
+            {
+                logger.Warn("Пользователь отменил передачу у Slave");
+                stoptransfer_signal = true;
+                status_bar = 0;
                 return;
             }
 
