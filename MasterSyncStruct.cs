@@ -87,6 +87,7 @@ namespace ModbusSyncStructLIb
 
 
         double alltranferendpacket=0;
+
         #endregion
 
         /// <summary>
@@ -365,7 +366,6 @@ namespace ModbusSyncStructLIb
         {
             stoptransfer_signal = true;
             Thread.Sleep(100);
-            stoptransfer_signal = false;
         }
         #endregion
 
@@ -584,9 +584,9 @@ namespace ModbusSyncStructLIb
 
             //logger.Info("Преобразование в ushort:Начато");
             Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);
-            
+
             //logger.Info("Преобразования в ushort");
-            
+
             //Вывод данных
             //write_console(date_modbus);
 
@@ -681,7 +681,7 @@ namespace ModbusSyncStructLIb
                 Console.WriteLine(ex);
                 logger.Error(ex);
                 logger.Error("Не удалось отправить данные");
-                state_master = 1;
+                state_master = SlaveState.haveerror;
                 //master.Dispose();
                 //close();
                 //Open();
@@ -718,7 +718,7 @@ namespace ModbusSyncStructLIb
                     logger.Warn("Пользователь отменил передачу");
                     status_bar = 0;
                     SendSingleMessage(SlaveState.haveusercanceltransfer, TableUsedforRegisters.StateSlaveRegisters);
-                    SendSingleMessage(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters);
+                    //SendSingleMessage(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters);
                     return;
                 }
 
@@ -729,18 +729,19 @@ namespace ModbusSyncStructLIb
                     logger.Warn("Пользователь отменил передачу у Slave");
                     stoptransfer_signal = true;
                     status_bar = 0;
+                    state_master = SlaveState.haveerror;
                     return;
                 }
                 status_slave = SendRequestForStatusSlave();
                 if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
                 {
-                    sendtypepacket(coilAddress, date_modbus, date, i, countneedsend);
+                    SendTypePacket(coilAddress, date_modbus, date, i, countneedsend);
                 }
                  else
                 {
                     int count= 0;
                     MoreThanTransferRepet(coilAddress, date_modbus, date, i, count, countneedsend);
-                    if (state_master==1)
+                    if (state_master== SlaveState.haveerror)
                     {
                         break;
                     }
@@ -752,11 +753,27 @@ namespace ModbusSyncStructLIb
 
         private void MoreThanTransferRepet(ushort coilAddress, ushort[] date_modbus, byte[] date,int i,int count,int countneedsend)
         {
-            Thread.Sleep(500);
+            Thread.Sleep(100);
+
+            if (stoptransfer_signal==true)
+            {
+                stoptransfer_signal = false;
+                return;
+            }
+
+            if (status_slave == SlaveState.haveusercanceltransfer)
+            {
+                logger.Warn("Пользователь отменил передачу у Slave");
+                stoptransfer_signal = true;
+                status_bar = 0;
+                state_master = SlaveState.haveerror;
+                return;
+            }
+
             if (count==3)
             {
                 logger.Error("Ошибка");
-                state_master = 1;
+                state_master = SlaveState.haveerror;
                 return;
             }
             else
@@ -766,7 +783,7 @@ namespace ModbusSyncStructLIb
 
                 if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
                 {
-                    sendtypepacket(coilAddress, date_modbus, date, i, countneedsend);
+                    SendTypePacket(coilAddress, date_modbus, date, i, countneedsend);
                 }
                 else
                 {
@@ -776,7 +793,7 @@ namespace ModbusSyncStructLIb
             }
         }
 
-        private void sendtypepacket(ushort coilAddress, ushort[] date_modbus, byte[] date,int i,int countneedsend)
+        private void SendTypePacket(ushort coilAddress, ushort[] date_modbus, byte[] date,int i,int countneedsend)
         {
                 //окончание передачи
                 if (countneedsend - 1 == i)
@@ -916,6 +933,7 @@ namespace ModbusSyncStructLIb
                 logger.Warn("Пользователь отменил передачу у Slave");
                 stoptransfer_signal = true;
                 status_bar = 0;
+                state_master = SlaveState.haveerror;
                 return;
             }
 

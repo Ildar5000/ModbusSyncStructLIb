@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ModbusSyncStructLIb.DespriptionState;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -96,7 +97,7 @@ namespace ModbusSyncStructLIb.EvenBase
                             count--;
                         }
                         //Случий с ошибкой на мастере
-                        if (master.state_master == 1)
+                        if (master.state_master == SlaveState.haveerror)
                         {
                             ClearQueue();
                             master.state_master = 0;

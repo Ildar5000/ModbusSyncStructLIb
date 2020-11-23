@@ -367,7 +367,7 @@ namespace ModbusSyncStructLIb
             return all_get_packet;
         }
 
-        public bool get_start_trasfert()
+        public bool GetStartTrasfert()
         {
             return start_transfer;
         }
@@ -458,9 +458,9 @@ namespace ModbusSyncStructLIb
                             else
                             {
                                 slave.DataStore.HoldingRegisters[TableUsedforRegisters.StateSlaveRegisters] = SlaveState.haveusercanceltransfer;
-                                Thread.Sleep(200);
+                                Thread.Sleep(300);
 
-                                slave.DataStore.HoldingRegisters[TableUsedforRegisters.StateSlaveRegisters] = SlaveState.have_free_time;
+                                //slave.DataStore.HoldingRegisters[TableUsedforRegisters.StateSlaveRegisters] = SlaveState.have_free_time;
                             }
 
                         }
@@ -505,7 +505,7 @@ namespace ModbusSyncStructLIb
                     logger.Info("Пользователь отменил посылку");
 
                     //slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                    //update_after_error();
+                    UpdateAfteError();
                 }
 
                 if (slave.DataStore.HoldingRegisters[1] != SlaveState.havechecktotime)
@@ -854,6 +854,7 @@ namespace ModbusSyncStructLIb
         {
             if (slave != null)
             {
+                Thread.Sleep(300);
                 slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                 logger.Error("Востановление состояние");
             }
