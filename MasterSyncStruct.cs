@@ -735,12 +735,12 @@ namespace ModbusSyncStructLIb
                 status_slave = SendRequestForStatusSlave();
                 if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
                 {
-                    SendTypePacket(coilAddress, date_modbus, date, i, countneedsend);
+                    SendTypePacket(coilAddress, date_modbus, i, countneedsend);
                 }
                  else
                 {
                     int count= 0;
-                    MoreThanTransferRepet(coilAddress, date_modbus, date, i, count, countneedsend);
+                    MoreThanTransferRepet(coilAddress, date_modbus, i, count, countneedsend);
                     if (state_master== SlaveState.haveerror)
                     {
                         break;
@@ -750,50 +750,7 @@ namespace ModbusSyncStructLIb
             }
         }
 
-
-        private void MoreThanTransferRepet(ushort coilAddress, ushort[] date_modbus, byte[] date,int i,int count,int countneedsend)
-        {
-            Thread.Sleep(100);
-
-            if (stoptransfer_signal==true)
-            {
-                stoptransfer_signal = false;
-                return;
-            }
-
-            if (status_slave == SlaveState.haveusercanceltransfer)
-            {
-                logger.Warn("Пользователь отменил передачу у Slave");
-                stoptransfer_signal = true;
-                status_bar = 0;
-                state_master = SlaveState.haveerror;
-                return;
-            }
-
-            if (count==3)
-            {
-                logger.Error("Ошибка");
-                state_master = SlaveState.haveerror;
-                return;
-            }
-            else
-            {
-                status_slave = SendRequestForStatusSlave();
-                logger.Info("Попытка номер "+ count);
-
-                if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
-                {
-                    SendTypePacket(coilAddress, date_modbus, date, i, countneedsend);
-                }
-                else
-                {
-                    MoreThanTransferRepet(coilAddress, date_modbus, date, i, count, countneedsend);
-                }
-                count++;
-            }
-        }
-
-        private void SendTypePacket(ushort coilAddress, ushort[] date_modbus, byte[] date,int i,int countneedsend)
+        private void SendTypePacket(ushort coilAddress, ushort[] date_modbus,int i,int countneedsend)
         {
                 //окончание передачи
                 if (countneedsend - 1 == i)
@@ -910,6 +867,7 @@ namespace ModbusSyncStructLIb
             Thread.Sleep(10);
         }
         #endregion
+
 
         #region trySend
         /// <summary>
@@ -1044,6 +1002,49 @@ namespace ModbusSyncStructLIb
                 return;
             }
         }
+
+        private void MoreThanTransferRepet(ushort coilAddress, ushort[] date_modbus, int i, int count, int countneedsend)
+        {
+            Thread.Sleep(100);
+
+            if (stoptransfer_signal == true)
+            {
+                stoptransfer_signal = false;
+                return;
+            }
+
+            if (status_slave == SlaveState.haveusercanceltransfer)
+            {
+                logger.Warn("Пользователь отменил передачу у Slave");
+                stoptransfer_signal = true;
+                status_bar = 0;
+                state_master = SlaveState.haveerror;
+                return;
+            }
+
+            if (count == 3)
+            {
+                logger.Error("Ошибка");
+                state_master = SlaveState.haveerror;
+                return;
+            }
+            else
+            {
+                status_slave = SendRequestForStatusSlave();
+                logger.Info("Попытка номер " + count);
+
+                if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
+                {
+                    SendTypePacket(coilAddress, date_modbus, i, countneedsend);
+                }
+                else
+                {
+                    MoreThanTransferRepet(coilAddress, date_modbus, i, count, countneedsend);
+                }
+                count++;
+            }
+        }
+
 
         #endregion
 
