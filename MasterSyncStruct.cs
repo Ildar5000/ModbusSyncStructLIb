@@ -707,7 +707,6 @@ namespace ModbusSyncStructLIb
             logger.Info("Будет отправлено " + countneedsend + " пакетов");
 
             status_bar_temp = 100 / Convert.ToDouble(countneedsend);
-            int type_message = 0;
             //кол-во отправок
             for (int i = 0; i < countneedsend; i++)
             {
@@ -736,6 +735,11 @@ namespace ModbusSyncStructLIb
                 if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
                 {
                     SendTypePacket(coilAddress, date_modbus, i, countneedsend);
+
+                    int temp_sstartaddr = Convert.ToInt32(coilAddress);
+                    temp_sstartaddr += count_send_packet;
+                    coilAddress = Convert.ToUInt16(temp_sstartaddr);
+
                 }
                  else
                 {

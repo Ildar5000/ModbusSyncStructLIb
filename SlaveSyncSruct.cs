@@ -82,8 +82,11 @@ namespace ModbusSyncStructLIb
         bool start_transfer = false;
 
 
+        /// <summary>
+        /// Кол-во переданных пакетов
         /// </summary>
         int countrecivedcount = 0;
+
         ushort[] receive_packet_data;
         byte[] data_byte_for_processing;
         byte slaveID=1;
@@ -448,10 +451,12 @@ namespace ModbusSyncStructLIb
                                 logger.Info("Пришел пакет с данными:");
                                 for (int i = 0; i < e.Data.B.Count; i++)
                                 {
+                                    slave.DataStore.HoldingRegisters[e.StartAddress+i] = e.Data.B[i];
+
                                     receive_packet_data[i] = e.Data.B[i];
                                 }
                                 
-                                slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
+                                //slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
 
                                 ProcessingInfopaket(receive_packet_data);
                             }
@@ -600,14 +605,16 @@ namespace ModbusSyncStructLIb
                 // о статусах
                 all_get_packet += date.Length * 2;
 
-                double countpacket = (countDataStruct / 2) / count_send_packet;
+                double countpacket = (countDataStruct / 2) / count_send_packet+1;
 
                 statusbar_value_repeat = 100 / countpacket;
 
                 if (countrecivedcount > countDataStruct)
                 {
-                    ProcessingInfopaketEndl();
+                    //ProcessingInfopaketEndl();
+                    ProcessingInfopaketEndl(Convert.ToInt32(countpacket));
                 }
+
                 // начало
                 if (countrecivedcount == receivedpacket.Length)
                 {
@@ -621,6 +628,7 @@ namespace ModbusSyncStructLIb
                     ProcessingInfopaketMiddle();
                     status_bar += statusbar_value_repeat;
                 }
+
             }
             catch(Exception ex)
             {
@@ -718,7 +726,25 @@ namespace ModbusSyncStructLIb
                 Console.WriteLine(ex);
             }
         }
+        private void ProcessingInfopaketEndl(int countpacket)
+        {
+            byte[] date = new byte[countDataStruct];
 
+            ushort[] date_ushort = new ushort[countDataStructUsshort];
+
+            int j = 0;
+            for (int i=10;i< countDataStructUsshort + 10; i++)
+            {
+                date_ushort[j]=slave.DataStore.HoldingRegisters[i];
+                j++;
+            }
+
+            Buffer.BlockCopy(date_ushort, 0, date, 0, date.Length);
+
+            ArchiveCode(date);
+
+
+        }
         #endregion
 
 
