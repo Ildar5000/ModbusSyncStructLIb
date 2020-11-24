@@ -15,6 +15,8 @@ namespace ModbusSyncStructLIb.EvenBase
         Queue<MemoryStream> numbers = new Queue<MemoryStream>();
         int count = 0;
 
+        public bool startsend=false;
+
         public QueueOfSentMessagesForSlave()
         {
             Thread thread = new Thread(Recursve);
@@ -41,6 +43,7 @@ namespace ModbusSyncStructLIb.EvenBase
         /// </summary>
         public void AddQueue(MemoryStream message)
         {
+            startsend = true;
             numbers.Enqueue(message);
             count++;
 
@@ -62,6 +65,7 @@ namespace ModbusSyncStructLIb.EvenBase
             {
                 if (master!=null)
                 {
+                    count = 0;
                     master.StopTransfer();
                     ClearQueue();
                 }
@@ -83,24 +87,30 @@ namespace ModbusSyncStructLIb.EvenBase
                 {
                     if (master.stoptransfer_signal==true)
                     {
-                        numbers.Clear();
+                        ClearQueue();
                         count = 0;
                         Thread.Sleep(100);
                         master.stoptransfer_signal = false;
+                        startsend = false;
                     }
                     else
                     {
                         if (master.state_master == 0 && numbers.Count != 0)
                         {
                             MemoryStream memory = numbers.Dequeue();
+                            startsend = true;
                             master.SendMultiMessage(memory);
                             count--;
+                            Thread.Sleep(500);
+                            startsend = false;
                         }
                         //Случий с ошибкой на мастере
                         if (master.state_master == SlaveState.haveerror)
                         {
                             ClearQueue();
+                            count = 0;
                             master.state_master = 0;
+                            startsend = false;
                         }
                     }
                 }

@@ -335,6 +335,7 @@ namespace ModbusSyncStructLIb
         public void StopTransfer()
         {
             stoptransfer_signal = true;
+            state_master = SlaveState.haveerror;
             Thread.Sleep(100);
         }
         #endregion
@@ -577,8 +578,10 @@ namespace ModbusSyncStructLIb
                     if (stoptransfer_signal==true)
                     {
                         logger.Info("Передача отменена");
-                        stoptransfer_signal = false;
+                        //Thread.Sleep(500);
+                        //stoptransfer_signal = false;
                         havetrasfer = false;
+                        state_master = 0;
                         return;
                     }
                     else
@@ -625,12 +628,8 @@ namespace ModbusSyncStructLIb
             //logger.Info("Будет отправлено " + countneedsend + " пакетов");
 
             status_bar_temp = 100 / Convert.ToDouble(countneedsend);
-<<<<<<< Updated upstream
-            int type_message = 0;
-            //кол-во отправок
-=======
+
             //кол-во пакетов
->>>>>>> Stashed changes
             for (int i = 0; i < countneedsend; i++)
             {
                 
@@ -650,6 +649,7 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Warn("Пользователь отменил передачу у Slave");
                     stoptransfer_signal = true;
+
                     status_bar = 0;
                     state_master = SlaveState.haveerror;
                     return;
@@ -659,8 +659,13 @@ namespace ModbusSyncStructLIb
                 {
                     SendTypePacket(coilAddress, date_modbus, i, countneedsend);
                 }
-                 else
+                else
                 {
+                    if (stoptransfer_signal == true)
+                    {
+                        return;
+                    }
+
                     int count= 0;
                     MoreThanTransferRepet(coilAddress, date_modbus, i, count, countneedsend);
                     if (state_master== SlaveState.haveerror)
@@ -723,7 +728,7 @@ namespace ModbusSyncStructLIb
             //Контрольная сумма
             crc16 = new Crc16();
             byte[] controlsum16 = crc16.ComputeChecksumBytes(date);
-
+            state_master = 0;
             //Отправка контрольной суммы
             SendCr16Message(controlsum16);
             status_bar = 100;
@@ -901,7 +906,7 @@ namespace ModbusSyncStructLIb
 
             if (stoptransfer_signal == true)
             {
-                stoptransfer_signal = false;
+                //stoptransfer_signal = false;
                 return;
             }
 
