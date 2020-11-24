@@ -17,6 +17,7 @@ namespace ModbusSyncStructLIb.CheckConnect
         public int deltatime=2000;
 
         public int deltatimeSlave = 2100;
+        public int timeRecoveraftercrash = 30 * 1000;
 
         Logger logger;
 
@@ -32,9 +33,11 @@ namespace ModbusSyncStructLIb.CheckConnect
             logger = LogManager.GetCurrentClassLogger();
 
             deltatime = master.deltaTimeCheck;
-            deltatimeSlave = deltatime + 100;
+            deltatimeSlave = deltatime;
+            timeRecoveraftercrash = master.timeRecoveraftercrash;
+
             this.master = master;
-            rand = new Random();
+            crtime = 0;
         }
 
         public ManagerConnectionModbus(SlaveSyncSruct slave)
@@ -42,8 +45,9 @@ namespace ModbusSyncStructLIb.CheckConnect
             logger = LogManager.GetCurrentClassLogger();
             deltatime = slave.deltaTimeCheck;
             deltatimeSlave = deltatime + 100;
+            timeRecoveraftercrash = slave.timeRecoveraftercrash;
             this.slave = slave;
-
+            crtime = 0;
             rand = new Random();
         }
 
@@ -70,13 +74,14 @@ namespace ModbusSyncStructLIb.CheckConnect
 
         public void Restart()
         {
-            Thread.Sleep(1000);
+            crtime = 0;
             Start();
         }
 
 
         public void Start()
         {
+            
             if (master!=null)
             {
                 MasterStart();
@@ -89,14 +94,25 @@ namespace ModbusSyncStructLIb.CheckConnect
 
         }
 
-        public void TimeWaitResponses(object date)
+        public void TimeWaitResponses(ushort date, bool stopthread)
         {
             ushort dateold = (ushort)date;
-            Thread.Sleep(200);
+
+            bool stopthreadstop = (bool)stopthread;
+
+            Thread.Sleep(110);
+            if (stopthreadstop==true)
+            {
+                return;
+            }
+
+            Thread.Sleep(timeRecoveraftercrash);
             if (dateold== crtime)
             {
-                //stop();
-                logger.Warn("Не отвечает Slave в течение нескольких минут");          
+                logger.Warn("Не отвечает Slave в течение нескольких секунд");
+                //Stop();
+                //Restart();
+                return;
             }
             
         }
@@ -109,7 +125,6 @@ namespace ModbusSyncStructLIb.CheckConnect
                 master.master.Transport.SlaveBusyUsesRetryCount = true;
                 master.master.Transport.WaitToRetryMilliseconds = 100;
                 master.master.Transport.Retries = 5;
-                crtime = (ushort)rand.Next(11,100);
             }
             catch (Exception ex)
             {
@@ -122,43 +137,51 @@ namespace ModbusSyncStructLIb.CheckConnect
                 {
                     if (master.try_reboot_connection==true)
                     {
-                        Thread wating = new Thread(new ParameterizedThreadStart(TimeWaitResponses));
-                        wating.Start(crtime);
-
+                        bool stopthread = false;
                         master.master.WriteSingleRegister(master.slaveID, TableUsedforRegisters.diagnostik_send, crtime);
-                        
+
+                        //Thread wating = new Thread(new ParameterizedThreadStart(TimeWaitResponses));
+                        //wating.Start(crtime, stopthread);
+
+                        var sendfile = Task.Run(() => TimeWaitResponses(crtime, stopthread));
+
+
                         //logger.Trace("Master отправил сигналs");
 
                         have_connection = true;
                         Thread.Sleep(100);
 
                         ushort[] getrex = master.master.ReadHoldingRegisters(master.slaveID, TableUsedforRegisters.diagnostik_send, 1);
-                        wating.Abort();
+                        
+                        stopthread = true;
+
 
                         have_connection = true;
                         if (crtime == getrex[0])
                         {
-                            crtime = (ushort)rand.Next(11, 100);
                             have_connection = true;
-                            //logger.Trace("Обратная связь присутствует");
                         }
                         else
                         {
                             have_connection = false;
-                            //logger.Trace("Обратная связь отсутствует");
                         }
-                        crtime = (ushort)rand.Next(11, 100);
 
-                        Thread.Sleep(deltatime);
+                        if (crtime== 65000)
+                        {
+                            crtime = 0;
+                        }
+
+                        crtime++;
+
+                        Thread.Sleep(deltatime-100);
                     }
                 }
                 catch (Exception ex)
                 {
                     have_connection = false;
+                    Thread.Sleep(timeRecoveraftercrash);
                     Stop();
-                    have_connection = false;
-                    Thread.Sleep(2000);
-
+                    Restart();
                     //logger.Trace("Cвязь Отсутствует");
                     //logger.Error(ex);
                     //Console.WriteLine(ex);
@@ -180,29 +203,23 @@ namespace ModbusSyncStructLIb.CheckConnect
             }
             catch(Exception ex)
             {
-
                 //logger.Error(ex);
             }
             while (islive)
             {
-               //Thread.Sleep(200);
                if (slave.try_reboot_connection == true)
                {
                     if (crtime != slave.randnumber)
                     {
                         crtime = slave.randnumber;
-                        have_connection = true;
-                        //logger.Trace("Есть связь между slave и master");
-                        Thread.Sleep(deltatimeSlave);
+                        have_connection = true; 
+                        Thread.Sleep(deltatimeSlave+300);
                     }
                     else
                     {
                         crtime = slave.randnumber;
                         have_connection = false;
-                        Thread.Sleep(deltatimeSlave);
-
-                        //logger.Warn("Нету связи");
-
+                        Thread.Sleep(deltatimeSlave+ 300);
                     }
                 }
             }
