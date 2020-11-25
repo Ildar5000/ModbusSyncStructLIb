@@ -761,6 +761,8 @@ namespace ModbusSyncStructLIb
                 all_get_packet = 0;
                 status_bar = 100;
                 have_trasfer = false;
+
+                status_bar = 0;
             }
             catch (Exception ex)
             {
@@ -782,7 +784,7 @@ namespace ModbusSyncStructLIb
                 byte[] class_outdecompress = memory.ToArray();
 
                 logger.Info("Декомпрессия прошла успешна ");
-                status_bar = 90;
+                
                 СlassDeserialization(class_outdecompress);
                 return;
             }

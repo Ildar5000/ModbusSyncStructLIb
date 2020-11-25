@@ -735,6 +735,7 @@ namespace ModbusSyncStructLIb
             havetrasfer = false;
 
             status_bar = 100;
+            status_bar = 0;
             logger.Info("Объект передан и сформирован у Slave");
             logger.Info("Передача окончена");
 

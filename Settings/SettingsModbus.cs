@@ -431,5 +431,6 @@ namespace ModbusSyncStructLIb.Settings
 
 
         }
+    
     }
 }
