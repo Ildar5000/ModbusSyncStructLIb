@@ -101,7 +101,7 @@ namespace ModbusSyncStructLIb.EvenBase
                             startsend = true;
                             master.SendMultiMessage(memory);
                             count--;
-                            Thread.Sleep(500);
+                            //Thread.Sleep(500);
                             startsend = false;
                         }
                         //Случий с ошибкой на мастере

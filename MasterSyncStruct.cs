@@ -731,6 +731,9 @@ namespace ModbusSyncStructLIb
             state_master = 0;
             //Отправка контрольной суммы
             SendCr16Message(controlsum16);
+
+            havetrasfer = false;
+
             status_bar = 100;
             logger.Info("Объект передан и сформирован у Slave");
             logger.Info("Передача окончена");
@@ -965,7 +968,7 @@ namespace ModbusSyncStructLIb
 
             //Мастер свободен
             state_master = 0;
-
+            havetrasfer = false;
             Thread.Sleep(50);
         }
 
