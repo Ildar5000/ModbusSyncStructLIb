@@ -220,6 +220,7 @@ namespace ModbusSyncStructLIb
 
         public void Open()
         {
+            state_master = 0;
             try
             {
                 if (TypeModbus==0)
@@ -272,6 +273,7 @@ namespace ModbusSyncStructLIb
             {
                 logger.Error(ex);
                 Console.WriteLine(ex);
+                return;
             }
             
         }
@@ -523,10 +525,11 @@ namespace ModbusSyncStructLIb
             status_bar = 0;
             havetrasfer = true;
             stoptransfer_signal = false;
-
+            state_master = 0;
             //logger.Info("Изменения структуры и подготовка к передачи");
             //Мастер занят
-            state_master = 1;
+            
+            //state_master = 1;
 
             ushort coilAddress = 10;
             date = stream.ToArray();

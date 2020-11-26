@@ -1,4 +1,5 @@
 ﻿using ModbusSyncStructLIb.DespriptionState;
+using ModbusSyncStructLIb.EvenBase;
 using NLog;
 using System;
 using System.Collections.Generic;
@@ -13,6 +14,7 @@ namespace ModbusSyncStructLIb.CheckConnect
     {
         public MasterSyncStruct master;
         public SlaveSyncSruct slave;
+        public QueueOfSentMessagesForSlave queueOf;
 
         public int deltatime=2000;
 
@@ -128,6 +130,7 @@ namespace ModbusSyncStructLIb.CheckConnect
             }
             catch (Exception ex)
             {
+                Thread.Sleep(timeRecoveraftercrash);
                 logger.Error(ex);
                 Stop();
             }
