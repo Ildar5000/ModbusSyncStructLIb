@@ -381,6 +381,13 @@ namespace ModbusSyncStructLIb
 
                         if (slave != null)
                         {
+                            if (e.StartAddress== TableUsedforRegisters.CR16)
+                            {
+                                slave.DataStore.HoldingRegisters[TableUsedforRegisters.CR16] = e.Data.B[0];
+                                CheckCRC16(e.Data.B[0]);
+                            }
+
+
                             if (e.StartAddress==TableUsedforRegisters.diagnostik_send)
                             {
                                 slave.DataStore.HoldingRegisters[TableUsedforRegisters.diagnostik_send] = e.Data.B[0];
@@ -475,6 +482,19 @@ namespace ModbusSyncStructLIb
             }
         }
 
+        private void CheckCRC16(ushort v)
+        {
+                //logger.Info("Состояние slave проверка контрольной суммы");
+                // В случае если идет проверка системы
+                if (cr16 == v)
+                {
+                    slave.DataStore.HoldingRegisters[5] = StateCR.haveNotError;
+                    logger.Info("(проверка CR16 состоялась)" + slave.DataStore.HoldingRegisters[5]);
+                    slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                    //logger.Info("Сумма совпала " + SlaveState.have_free_time);
+                }
+        }
+
         public void ProcessingDiag(ushort v)
         {
              if (randnumber!=v)
@@ -521,18 +541,6 @@ namespace ModbusSyncStructLIb
 
                     slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
 
-                }
-                if (slave.DataStore.HoldingRegisters[1] == SlaveState.havechecktotime)
-                {
-                    logger.Info("Состояние slave проверка контрольной суммы");
-                    // В случае если идет проверка системы
-                    if (cr16 == date)
-                    {
-                        slave.DataStore.HoldingRegisters[5] = StateCR.haveNotError;
-                        logger.Info("В регистр проверки контрольной суммы записался (проверка CR16 состоялась)" + slave.DataStore.HoldingRegisters[5]);
-                        slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                        //logger.Info("Сумма совпала " + SlaveState.have_free_time);
-                    }
                 }
             }
 
