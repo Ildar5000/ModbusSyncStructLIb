@@ -58,6 +58,13 @@ namespace ModbusSyncStructLIb.Settings
             port_IP_client = 502;
             typeModbus = 0;
             slaveID = 1;
+            defaulttypemodbus = 0;
+            deltatime = 300;
+            try_reboot_connection = true;
+
+
+
+
         }
 
         public SettingsModbus(string ComName, int BoudRate, int DataBits, string Party_type, string StopBits_type, int ReadTimeout, int WriteTimeout,string IP_client,int port_IP_client,int typeModbus,byte slaveID, string typeModbusSTR)
