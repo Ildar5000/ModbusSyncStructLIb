@@ -48,12 +48,10 @@ namespace ModbusSyncStructLIb
         int TypeModbus = 0;
         public int deltaTimeCheck = 2000;
 
+        public int stateSlave = SlaveState.have_free_time;
+
+
         #endregion
-
-
-
-
-
         private static Logger logger;
         
         
@@ -115,9 +113,9 @@ namespace ModbusSyncStructLIb
 
         public SlaveSyncSruct()
         {
-
             try
             {
+                stateSlave= SlaveState.have_free_time;
                 var loggerconf = new XmlLoggingConfiguration("NLog.config");
                 logger = LogManager.GetCurrentClassLogger();
 
@@ -125,6 +123,7 @@ namespace ModbusSyncStructLIb
 
                 if (File.Exists(path) == true)
                 {
+                    stateSlave = SlaveState.have_free_time;
                     SettingsModbus settings;
                     // десериализация
                     using (FileStream fs = new FileStream("Settingsmodbus.xml", FileMode.OpenOrCreate))
@@ -216,7 +215,9 @@ namespace ModbusSyncStructLIb
             }
             catch(Exception ex)
             {
+                stateSlave = SlaveState.haveerror;
                 logger.Error(ex);
+                logger.Error("Неправильный настройки, пожалуйста проверьте");
             }
             
         }
@@ -229,8 +230,6 @@ namespace ModbusSyncStructLIb
                 {
                     serialPort.Open();
                     SerialPortAdapter = new SerialPortAdapter(serialPort);
-
-
                     logger.Info("Создания modbus RTU");
                     slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
                     
@@ -281,9 +280,7 @@ namespace ModbusSyncStructLIb
 
                     Thread thread = new Thread(ListenerTCP.Start);
 
-
                     thread.Start();
-
                     slave = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP);
                     logger.Info("Slave подключен");
 
@@ -300,6 +297,7 @@ namespace ModbusSyncStructLIb
             }
             catch(Exception ex)
             {
+                stateSlave = SlaveState.haveerror;
                 Logger log = LogManager.GetLogger("ModbusSerialSlave");
                 LogLevel level = LogLevel.Error;
                 log.Log(level, ex.Message);
@@ -510,7 +508,7 @@ namespace ModbusSyncStructLIb
                     {
                         countDataStruct = Convert.ToInt32(date);
                         
-                        //logger.Info("Получен объем данных в байт:" + countDataStruct);
+                        logger.Info("Получен объем данных в байт:" + countDataStruct);
                         int dataushort = (countDataStruct / 2) + 1;
                         //logger.Info("Получен объем данных в ushort:" + dataushort);
 

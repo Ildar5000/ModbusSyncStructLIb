@@ -189,6 +189,7 @@ namespace ModbusSyncStructLIb
             }
             catch (Exception ex)
             {
+                state_master = SlaveState.haveerror;
                 logger.Error(ex);
             }
 
@@ -272,7 +273,11 @@ namespace ModbusSyncStructLIb
             catch(Exception ex)
             {
                 logger.Error(ex);
+                logger.Error("Неправильный настройки, пожалуйста проверьте");
+                state_master = SlaveState.haveerror;
                 Console.WriteLine(ex);
+                state_master = SlaveState.have_free_time;
+
                 return;
             }
             
@@ -611,6 +616,7 @@ namespace ModbusSyncStructLIb
             catch(Exception ex)
             {
                 stoptransfer_signal = true;
+                havetrasfer = false;
                 //Console.WriteLine(ex);
                 logger.Error("Не удалось отправить данные");
                 logger.Error(ex);
@@ -771,6 +777,7 @@ namespace ModbusSyncStructLIb
             if (status_slave == SlaveState.haveusercanceltransfer)
             {
                 logger.Warn("Пользователь отменил передачу у Slave");
+                havetrasfer = false;
                 stoptransfer_signal = true;
                 status_bar = 0;
                 return;
@@ -895,6 +902,8 @@ namespace ModbusSyncStructLIb
                 }
                 catch (Exception ex)
                 {
+                    stoptransfer_signal = true;
+                    havetrasfer = false;
                     Console.WriteLine(ex);
                     logger.Error(ex);
                 }
