@@ -13,7 +13,7 @@ using ModbusSyncStructLIb.DespriptionState;
 using System.Threading;
 using NLog.Config;
 using ModbusSyncStructLIb.ControlCheck;
-using Modbus.Serial;
+//using Modbus.Serial;
 using SevenZip.Compression.LZMA;
 
 using System.IO.Compression;
@@ -30,7 +30,7 @@ namespace ModbusSyncStructLIb
     {
         #region modbus serial
         SerialPort serialPort;
-        SerialPortAdapter SerialPortAdapter;
+        //SerialPortAdapter SerialPortAdapter;
         public ModbusMaster master;
         #endregion
 
@@ -227,10 +227,10 @@ namespace ModbusSyncStructLIb
                 if (TypeModbus==0)
                 {
                     serialPort.Open();
-                    SerialPortAdapter = new SerialPortAdapter(serialPort);
+                    //SerialPortAdapter = new SerialPortAdapter(serialPort);
 
                     logger.Info("Создания modbus RTU");
-                    master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
+                    master = ModbusSerialMaster.CreateRtu(serialPort);
                     
                     //slaveID = 1;
                     ushort startAddress = 1;
@@ -244,10 +244,10 @@ namespace ModbusSyncStructLIb
                 if (TypeModbus == 1)
                 {
                     serialPort.Open();
-                    SerialPortAdapter = new SerialPortAdapter(serialPort);
+                    //SerialPortAdapter = new SerialPortAdapter(serialPort);
 
                     logger.Info("Создания modbus Ascii");
-                    master = ModbusSerialMaster.CreateAscii(SerialPortAdapter);
+                    master = ModbusSerialMaster.CreateAscii(serialPort);
                     
                     master.Transport.Retries = 1000;
                     master.Transport.ReadTimeout = 1000;
@@ -268,6 +268,10 @@ namespace ModbusSyncStructLIb
                     TcpClient client = new TcpClient();
                     client.BeginConnect(IP_client, IP_client_port, null, null);
                     master = ModbusIpMaster.CreateIp(client);
+                    ushort startAddress = 1;
+                    ushort numOfPoints = 10;
+                    ushort[] holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+                    Console.WriteLine(holding_register);
                 }
             }
             catch(Exception ex)

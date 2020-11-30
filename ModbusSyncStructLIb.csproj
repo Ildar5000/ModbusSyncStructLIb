@@ -99,12 +99,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\NModbus\NModbus4\NModbus4.Serial\NModbus4.Serial.csproj">
-      <Project>{55795b78-4555-4694-85c6-a7f657a27d65}</Project>
-      <Name>NModbus4.Serial</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\NModbus\NModbus4\NModbus4\NModbus4.csproj">
-      <Project>{4db0072c-b952-4247-b36d-f9afd555511f}</Project>
+    <ProjectReference Include="..\EMC07NModbus4\NModbus4\NModbus4.csproj">
+      <Project>{5e65b798-b95a-4a3b-bc2b-7b3b28dc263e}</Project>
       <Name>NModbus4</Name>
     </ProjectReference>
     <ProjectReference Include="..\StructAllforTest\StructAllforTest.csproj">

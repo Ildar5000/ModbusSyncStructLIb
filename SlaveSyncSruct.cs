@@ -15,7 +15,7 @@ using System.IO;
 using StructAllforTest;
 using ModbusSyncStructLIb.ControlCheck;
 using NLog.Config;
-using Modbus.Serial;
+//using Modbus.Serial;
 using System.Net.Sockets;
 using SevenZip;
 using System.Diagnostics;
@@ -29,7 +29,7 @@ namespace ModbusSyncStructLIb
     {
         public SerialPort serialPort;
 
-        public SerialPortAdapter SerialPortAdapter;
+        //public SerialPortAdapter SerialPortAdapter;
         public ModbusSlave slave;
 
         //public ModbusTcpSlave modbusTcp;
@@ -229,9 +229,9 @@ namespace ModbusSyncStructLIb
                 if (TypeModbus == 0)
                 {
                     serialPort.Open();
-                    SerialPortAdapter = new SerialPortAdapter(serialPort);
+                    //SerialPortAdapter = new SerialPortAdapter(serialPort);
                     logger.Info("Создания modbus RTU");
-                    slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
+                    slave = ModbusSerialSlave.CreateRtu(slaveID, serialPort,1000);
                     
                     slave.Transport.WriteTimeout = 1000;
                     slave.Transport.ReadTimeout = 1000;
@@ -249,10 +249,10 @@ namespace ModbusSyncStructLIb
                 if (TypeModbus == 1)
                 {
                     serialPort.Open();
-                    SerialPortAdapter = new SerialPortAdapter(serialPort);
+                    //SerialPortAdapter = new SerialPortAdapter(serialPort);
 
                     logger.Info("Создания modbus Ascii");
-                    slave = ModbusSerialSlave.CreateAscii(slaveID, SerialPortAdapter);
+                    slave = ModbusSerialSlave.CreateAscii(slaveID, serialPort,1000);
                     slave.Transport.WriteTimeout = 1000;
                     slave.Transport.ReadTimeout = 1000;
                     
