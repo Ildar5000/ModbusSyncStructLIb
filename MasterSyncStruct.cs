@@ -266,12 +266,18 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Создания modbus modbusIp");
                     TcpClient client = new TcpClient();
-                    client.BeginConnect(IP_client, IP_client_port, null, null);
+
+                    //client = new TcpClient(IP_client, IP_client_port);
+                    //client.SendTimeout = 1000;
+                    //client.BeginConnect(IP_client, IP_client_port, null, null);
+
+                    client.Connect(IP_client, IP_client_port);
                     master = ModbusIpMaster.CreateIp(client);
+                    
                     ushort startAddress = 1;
                     ushort numOfPoints = 10;
-                    ushort[] holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
-                    Console.WriteLine(holding_register);
+                    //ushort[] holding_register = master.ReadHoldingRegisters(slaveID, startAddress, numOfPoints);
+                    //Console.WriteLine(holding_register);
                 }
             }
             catch(Exception ex)

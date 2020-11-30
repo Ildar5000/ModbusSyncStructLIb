@@ -277,11 +277,12 @@ namespace ModbusSyncStructLIb
 
                     //IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
                     ListenerTCP = new TcpListener(IPAddress.Any, IP_client_port);
-
+                    
                     Thread thread = new Thread(ListenerTCP.Start);
 
                     thread.Start();
-                    slave = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP);
+                    
+                    slave = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP,1000,5,1,"1",false);
                     logger.Info("Slave подключен");
 
                     slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
