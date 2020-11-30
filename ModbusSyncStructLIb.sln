@@ -11,8 +11,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StructAllforTest", "..\Stru
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modbus", "Modbus", "{25B57E4F-6550-4E70-9996-85DFECF3341A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NModbus4.Serial", "..\NModbus\NModbus4\NModbus4.Serial\NModbus4.Serial.csproj", "{55795B78-4555-4694-85C6-A7F657A27D65}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NModbus4", "..\EMC07NModbus4\NModbus4\NModbus4.csproj", "{5E65B798-B95A-4A3B-BC2B-7B3B28DC263E}"
 EndProject
 Global
@@ -33,10 +31,6 @@ Global
 		{16CCDD08-7631-4316-BB22-901C8DBD53A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16CCDD08-7631-4316-BB22-901C8DBD53A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{16CCDD08-7631-4316-BB22-901C8DBD53A3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{55795B78-4555-4694-85C6-A7F657A27D65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{55795B78-4555-4694-85C6-A7F657A27D65}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{55795B78-4555-4694-85C6-A7F657A27D65}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{55795B78-4555-4694-85C6-A7F657A27D65}.Release|Any CPU.Build.0 = Release|Any CPU
 		{5E65B798-B95A-4A3B-BC2B-7B3B28DC263E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{5E65B798-B95A-4A3B-BC2B-7B3B28DC263E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E65B798-B95A-4A3B-BC2B-7B3B28DC263E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -46,7 +40,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{55795B78-4555-4694-85C6-A7F657A27D65} = {25B57E4F-6550-4E70-9996-85DFECF3341A}
 		{5E65B798-B95A-4A3B-BC2B-7B3B28DC263E} = {25B57E4F-6550-4E70-9996-85DFECF3341A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

@@ -231,7 +231,7 @@ namespace ModbusSyncStructLIb
                     serialPort.Open();
                     //SerialPortAdapter = new SerialPortAdapter(serialPort);
                     logger.Info("Создания modbus RTU");
-                    slave = ModbusSerialSlave.CreateRtu(slaveID, serialPort,1000);
+                    slave = ModbusSerialSlave.CreateRtu(slaveID, serialPort,100);
                     
                     slave.Transport.WriteTimeout = 1000;
                     slave.Transport.ReadTimeout = 1000;
@@ -252,7 +252,7 @@ namespace ModbusSyncStructLIb
                     //SerialPortAdapter = new SerialPortAdapter(serialPort);
 
                     logger.Info("Создания modbus Ascii");
-                    slave = ModbusSerialSlave.CreateAscii(slaveID, serialPort,1000);
+                    slave = ModbusSerialSlave.CreateAscii(slaveID, serialPort,100);
                     slave.Transport.WriteTimeout = 1000;
                     slave.Transport.ReadTimeout = 1000;
                     
@@ -282,7 +282,7 @@ namespace ModbusSyncStructLIb
 
                     thread.Start();
                     
-                    slave = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP,1000,5,1,"1",false);
+                    slave = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP,100,5,1,"1",false);
                     logger.Info("Slave подключен");
 
                     slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
