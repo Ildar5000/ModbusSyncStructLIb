@@ -736,10 +736,11 @@ namespace ModbusSyncStructLIb
                 {
                     SendTypePacket(coilAddress, date_modbus, i, countneedsend);
 
-                    int temp_sstartaddr = Convert.ToInt32(coilAddress);
-                    temp_sstartaddr += count_send_packet;
-                    coilAddress = Convert.ToUInt16(temp_sstartaddr);
+                    //int temp_sstartaddr = Convert.ToInt32(coilAddress);
+                    //temp_sstartaddr += count_send_packet;
+                    //coilAddress = Convert.ToUInt16(temp_sstartaddr);
 
+                    coilAddress += Convert.ToUInt16(count_send_packet);
                 }
                  else
                 {
@@ -752,7 +753,7 @@ namespace ModbusSyncStructLIb
 
                 }
 
-                coilAddress += Convert.ToUInt16(count_send_packet);
+
 
 
             }
