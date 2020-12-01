@@ -184,7 +184,8 @@ namespace ModbusSyncStructLIb.CheckConnect
                     have_connection = false;
                     Thread.Sleep(timeRecoveraftercrash);
                     Stop();
-                    Restart();
+                    var sendfile = Task.Run(() => Restart());
+                    
                     //logger.Trace("Cвязь Отсутствует");
                     //logger.Error(ex);
                     //Console.WriteLine(ex);

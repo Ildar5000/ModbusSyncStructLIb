@@ -578,7 +578,7 @@ namespace ModbusSyncStructLIb
                     slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                 }
             }
-        }
+        }  
 
 
         /// <summary>
