@@ -306,6 +306,12 @@ namespace ModbusSyncStructLIb
                     
                     slave.DataStore.HoldingRegisters[1] = 0;
 
+                    for(int i=2;i<10000;i++)
+                    {
+                        slave.DataStore.HoldingRegisters[i] = 0;
+                    }
+                    
+
                     Task listenTask= slave.ListenAsync();
                     logger.Info("Slave Ожидание");
                   
@@ -740,10 +746,24 @@ namespace ModbusSyncStructLIb
             }
 
             Buffer.BlockCopy(date_ushort, 0, date, 0, date.Length);
+            date[0] = 93;
+
+
+            bool isEqual = Enumerable.SequenceEqual(data_byte_for_processing, date);
+
+            
+            for (int i=0; i< data_byte_for_processing.Length;i++)
+            {
+                if (data_byte_for_processing[i]!= date[i])
+                {
+                    Console.WriteLine(i);
+                }
+
+            }
 
             ArchiveCode(date);
 
-
+            
         }
         #endregion
 
