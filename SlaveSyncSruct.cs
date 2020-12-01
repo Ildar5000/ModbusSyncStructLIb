@@ -618,21 +618,21 @@ namespace ModbusSyncStructLIb
 
                 if (countrecivedcount > countDataStruct)
                 {
-                    ProcessingInfopaketEndl();
+                    //ProcessingInfopaketEndl();
                     ProcessingInfopaketEndl(true);
                 }
 
                 // начало
                 if (countrecivedcount == receivedpacket.Length)
                 {
-                    ProcessingInfopaketInception();
+                    //ProcessingInfopaketInception();
 
                     status_bar += statusbar_value_repeat;
                 }
 
                 if (countrecivedcount > receivedpacket.Length && countrecivedcount < countDataStruct)
                 {
-                    ProcessingInfopaketMiddle();
+                    //ProcessingInfopaketMiddle();
                     status_bar += statusbar_value_repeat;
                 }
 
