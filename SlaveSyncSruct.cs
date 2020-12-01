@@ -451,8 +451,12 @@ namespace ModbusSyncStructLIb
                                 logger.Info("Пришел пакет с данными:");
                                 for (int i = 0; i < e.Data.B.Count; i++)
                                 {
+<<<<<<< Updated upstream
                                     slave.DataStore.HoldingRegisters[e.StartAddress+i] = e.Data.B[i];
 
+=======
+                                    slave.DataStore.HoldingRegisters[e.StartAddress] = e.Data.B[i];
+>>>>>>> Stashed changes
                                     receive_packet_data[i] = e.Data.B[i];
                                 }
                                 
@@ -611,8 +615,14 @@ namespace ModbusSyncStructLIb
 
                 if (countrecivedcount > countDataStruct)
                 {
+<<<<<<< Updated upstream
                     //ProcessingInfopaketEndl();
                     ProcessingInfopaketEndl(Convert.ToInt32(countpacket));
+=======
+                    ProcessingInfopaketEndl();
+                    ProcessingInfopaketEndl(true);
+
+>>>>>>> Stashed changes
                 }
 
                 // начало
@@ -730,6 +740,7 @@ namespace ModbusSyncStructLIb
         {
             byte[] date = new byte[countDataStruct];
 
+<<<<<<< Updated upstream
             ushort[] date_ushort = new ushort[countDataStructUsshort];
 
             int j = 0;
@@ -745,6 +756,36 @@ namespace ModbusSyncStructLIb
 
 
         }
+=======
+        private void ProcessingInfopaketEndl(bool second)
+        {
+
+            try
+            {
+                byte[] data = new byte[countDataStruct];
+                int countDataStructUsshort = Convert.ToInt32((countDataStruct / 2) + 1);
+                ushort[] dataushort = new ushort[countDataStructUsshort];
+
+                int  countpacket = Convert.ToInt32((countDataStruct / 2) / count_send_packet)+1;
+                int j = 0;
+                for (int i=10;i< countpacket; i++)
+                {
+                    dataushort[j] = slave.DataStore.HoldingRegisters[i];
+                    j++;
+                }
+               
+                Buffer.BlockCopy(dataushort, 0, data, 0, data.Length);
+                ArchiveCode(data);
+
+            }
+            catch(Exception ex)
+            {
+
+            }
+
+        }
+
+>>>>>>> Stashed changes
         #endregion
 
 

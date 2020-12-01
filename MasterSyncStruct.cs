@@ -751,6 +751,10 @@ namespace ModbusSyncStructLIb
                     }
 
                 }
+
+                coilAddress += Convert.ToUInt16(count_send_packet);
+
+
             }
         }
 
