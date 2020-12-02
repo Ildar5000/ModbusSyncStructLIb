@@ -105,6 +105,11 @@ namespace ModbusSyncStructLIb
 
         public int stateSlave = 0;
 
+
+        byte[] date_moreregx;
+        ushort[] date_moreregxushort;
+
+        int count_packetsend = 0;
         #region init
 
         public SlaveSyncSruct()
@@ -394,7 +399,6 @@ namespace ModbusSyncStructLIb
                     if (e.Data.B.Count == 1)
                     {
                         //про состояние 
-
                         if (slave != null)
                         {
                             if (e.StartAddress==TableUsedforRegisters.diagnostik_send)
@@ -434,7 +438,6 @@ namespace ModbusSyncStructLIb
                         status_bar = 0;
                         all_get_packet = 0;
 
-
                         ushort[] tworex=new ushort[2];
                         for (int i = 0; i < e.Data.B.Count; i++)
                         {
@@ -457,15 +460,36 @@ namespace ModbusSyncStructLIb
                             {
                                 //Console.WriteLine("Пришел пакет с данными:");
                                 logger.Info("Пришел пакет с данными:");
-                                for (int i = 0; i < e.Data.B.Count; i++)
+                                //int limit = TableUsedforRegisters.limitregxfortransfer - TableUsedforRegisters.count_packet;
+                                
+                                if (e.StartAddress>= TableUsedforRegisters.limitregxfortransfer)
                                 {
-                                    slave.DataStore.HoldingRegisters[e.StartAddress+i] = e.Data.B[i];
-                                    receive_packet_data[i] = e.Data.B[i];
+                                    for (int i = 0; i < e.Data.B.Count; i++)
+                                    {
+                                        slave.DataStore.HoldingRegisters[e.StartAddress + i] = e.Data.B[i];
+                                        receive_packet_data[i] = e.Data.B[i];
+                                    }
+                                    
+                                    SavePreviousByte(TableUsedforRegisters.limitregxfortransfer, count_packetsend);
+                                    count_packetsend++;
+                                    ProcessingInfopaket(receive_packet_data);
+                                    
+                                }
+                                else
+                                {
+                                    for (int i = 0; i < e.Data.B.Count; i++)
+                                    {
+
+                                        slave.DataStore.HoldingRegisters[e.StartAddress + i] = e.Data.B[i];
+                                        receive_packet_data[i] = e.Data.B[i];
+                                    }
+
+                                    ProcessingInfopaket(receive_packet_data);
                                 }
                                 
                                 //slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
 
-                                ProcessingInfopaket(receive_packet_data);
+
                             }
                             else
                             {
@@ -536,6 +560,10 @@ namespace ModbusSyncStructLIb
                         data_byte_for_processing = new byte[countDataStruct];
                         countDataStructUsshort = (countDataStruct / 2) + 1;
 
+                        ///moreRegx
+                        date_moreregx = new byte[countDataStruct];
+                        date_moreregxushort = new ushort[countDataStructUsshort];
+
                         //в случии если пакет прервался то обнуляем
                         countrecivedcount = 0;
                     }
@@ -587,6 +615,11 @@ namespace ModbusSyncStructLIb
                         data_byte_for_processing = new byte[countDataStruct];
                         countDataStructUsshort = (countDataStruct / 2) + 1;
 
+                        ///moreRegx
+                        date_moreregx = new byte[countDataStruct];
+                        date_moreregxushort = new ushort[countDataStructUsshort];
+
+
                         //в случии если пакет прервался то обнуляем
                         countrecivedcount = 0;
                     }
@@ -616,23 +649,23 @@ namespace ModbusSyncStructLIb
 
                 statusbar_value_repeat = 100 / countpacket;
 
-                if (countrecivedcount > countDataStruct)
+                if (countrecivedcount >= countDataStruct)
                 {
-                    //ProcessingInfopaketEndl();
+                    ProcessingInfopaketEndl();
                     ProcessingInfopaketEndl(true);
                 }
 
                 // начало
                 if (countrecivedcount == receivedpacket.Length)
                 {
-                    //ProcessingInfopaketInception();
+                    ProcessingInfopaketInception();
 
                     status_bar += statusbar_value_repeat;
                 }
 
                 if (countrecivedcount > receivedpacket.Length && countrecivedcount < countDataStruct)
                 {
-                    //ProcessingInfopaketMiddle();
+                    ProcessingInfopaketMiddle();
                     status_bar += statusbar_value_repeat;
                 }
 
@@ -707,6 +740,7 @@ namespace ModbusSyncStructLIb
             try
             {               
                 int delta_start_mid = countrecivedcount - receivedpacket.Length;
+                //bytes
                 int delta_countreciveAndSend = Math.Abs(countDataStruct - delta_start_mid);
                 
                 for (int i = 0; i < delta_countreciveAndSend; i++)
@@ -719,13 +753,13 @@ namespace ModbusSyncStructLIb
 
                 //Обнуление переданных пакетов
                 logger.Info("обнуление переданных пакетов");
-                countrecivedcount = 0;
+                //countrecivedcount = 0;
 
                 //собираем класс
                 Console.WriteLine("Деархивация и десериализация объекта");
 
                 //Сlass_Deserialization(data_byte_for_processing);
-                ArchiveCode(data_byte_for_processing);
+                //ArchiveCode(data_byte_for_processing);
 
             }
             catch (Exception ex)
@@ -735,36 +769,88 @@ namespace ModbusSyncStructLIb
         }
         private void ProcessingInfopaketEndl(bool countpacket)
         {
-            byte[] date = new byte[countDataStruct];
-            ushort[] date_ushort = new ushort[countDataStructUsshort];
+            //date_moreregx
+            //date_moreregxushort
 
-            int j = 0;
-            for (int i=10;i< countDataStructUsshort + 10; i++)
-            {
-                date_ushort[j]=slave.DataStore.HoldingRegisters[i];
-                j++;
-            }
+            //int j = 0;
+            int delta_start_mid = Math.Abs(countrecivedcount - receivedpacket.Length);
+            int delta_countreciveAndSend = Math.Abs(countDataStruct - delta_start_mid);
+                      
+            //countDataStructUsshort
 
-            Buffer.BlockCopy(date_ushort, 0, date, 0, date.Length);
-            date[0] = 93;
-
-
-            bool isEqual = Enumerable.SequenceEqual(data_byte_for_processing, date);
-
+            int j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer-10);
             
+            if (count_packetsend==0)
+            {
+                for (int i = 10; i < countDataStructUsshort + 10; i++)
+                {
+                    date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
+                    j++;
+                }
+                Buffer.BlockCopy(date_moreregxushort, 0, date_moreregx, 0, date_moreregx.Length);
+                date_moreregx[0] = 93;
+            }
+            else
+            {
+                int countrecivedcountushort = (countrecivedcount / 2);
+                int receivedpacket_ushort = receivedpacket.Length / 2;
+
+
+
+                j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer - 10 + TableUsedforRegisters.count_packet);
+
+                int deltaushort = (countDataStructUsshort- j);
+
+                for (int i = 10; i < deltaushort + 10; i++)
+                {
+                    date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
+                    j++;
+                }
+                Buffer.BlockCopy(date_moreregxushort, 0, date_moreregx, 0, date_moreregx.Length);
+                date_moreregx[0] = 93;
+            }
+            countrecivedcount = 0;
+            bool isEqual = Enumerable.SequenceEqual(data_byte_for_processing, date_moreregx);
+
             for (int i=0; i< data_byte_for_processing.Length;i++)
             {
-                if (data_byte_for_processing[i]!= date[i])
+                if (data_byte_for_processing[i]!= date_moreregx[i])
                 {
                     Console.WriteLine(i);
                 }
 
             }
+            count_packetsend = 0;
 
-            ArchiveCode(date);
+
+
+
+
+            ArchiveCode(date_moreregx);
 
             
         }
+
+
+        private void SavePreviousByte(int limit,int count_packetsend)
+        {
+            int j = 0;
+            if (count_packetsend==0)
+            {
+                j = count_packetsend * (limit - 10);
+            }
+            else
+            {
+                j = count_packetsend * (limit - 10+ TableUsedforRegisters.count_packet);
+            }
+
+            for (int i = 10; i < limit+TableUsedforRegisters.count_packet; i++)
+            {
+                date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
+                j++;
+            }
+        }
+
         #endregion
 
 
