@@ -56,5 +56,10 @@ namespace ModbusSyncStructLIb.DespriptionState
         /// </summary>
         public const int count_packet = 70;
 
+
+        public const ushort limitregxfortransfer=1010;
+
+
+        public const ushort start_send_regx=10;
     }
 }
