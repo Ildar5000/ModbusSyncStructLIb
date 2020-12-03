@@ -774,7 +774,7 @@ namespace ModbusSyncStructLIb
             
             if (count_packetsend==0)
             {
-                for (int i = 10; i < countDataStructUsshort + TableUsedforRegisters.count_packet; i++)
+                for (int i = 10; i < countDataStructUsshort+10; i++)
                 {
                     date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
                     j++;
@@ -784,13 +784,13 @@ namespace ModbusSyncStructLIb
             }
             else
             {
-                j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer);
+                j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer-10+TableUsedforRegisters.count_packet);
 
                 //int deltaushort = Math.Abs(countDataStructUsshort- j);
 
-                int delta = Math.Abs((j + TableUsedforRegisters.limitregxfortransfer + TableUsedforRegisters.count_packet) - date_moreregxushort.Length);
+                int delta = Math.Abs((j + TableUsedforRegisters.limitregxfortransfer + TableUsedforRegisters.count_packet-10) - date_moreregxushort.Length);
 
-                for (int i = 10; i < TableUsedforRegisters.limitregxfortransfer + TableUsedforRegisters.count_packet - delta+10; i++)
+                for (int i = 10; i < TableUsedforRegisters.limitregxfortransfer + TableUsedforRegisters.count_packet - delta; i++)
                 {
                     date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
                     j++;
@@ -830,7 +830,7 @@ namespace ModbusSyncStructLIb
             {
                 j = 0;
 
-                for (int i = 10; i < limit + TableUsedforRegisters.count_packet; i++)
+                for (int i = 10; i < limit + TableUsedforRegisters.count_packet+10; i++)
                 {
                     date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
                     j++;
@@ -839,12 +839,12 @@ namespace ModbusSyncStructLIb
             }
             else
             {
-                j = count_packetsend * (limit);
+                j = count_packetsend * (limit-10+ TableUsedforRegisters.count_packet);
 
                 if (j+limit + TableUsedforRegisters.count_packet< date_moreregxushort.Length)
                 {
                     
-                    for (int i = 10; i < limit + TableUsedforRegisters.count_packet; i++)
+                    for (int i = 10; i < limit + TableUsedforRegisters.count_packet+10; i++)
                     {
                         date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
                         j++;

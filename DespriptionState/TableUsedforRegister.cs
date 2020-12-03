@@ -54,10 +54,10 @@ namespace ModbusSyncStructLIb.DespriptionState
         /// <summary>
         /// Кол-во переднных какналов за 1 запрос
         /// </summary>
-        public const int count_packet = 10;
+        public const int count_packet = 100;
 
 
-        public const ushort limitregxfortransfer=110;
+        public const ushort limitregxfortransfer=1110;
 
 
         public const ushort start_send_regx=10;
