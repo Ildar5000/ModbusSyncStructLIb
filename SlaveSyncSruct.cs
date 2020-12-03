@@ -423,11 +423,7 @@ namespace ModbusSyncStructLIb
                                 else
                                 {
                                     logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
-                                    slave.DataStore.HoldingRegisters[1] = SlaveState.havenot_time;
-
                                     ProcessingSingleregx(e.Data.B[0]);
-                                    //Console.WriteLine("Пришла команда на обработку"+e.Data.B[0]);
-                                    logger.Info("Пришла команда на обработку" + e.Data.B[0]);
                                 }
                             }  
                         }
@@ -443,7 +439,6 @@ namespace ModbusSyncStructLIb
                         for (int i = 0; i < e.Data.B.Count; i++)
                         {
                             tworex[i] = e.Data.B[i];
-                            //Console.Write(receive_packet_data[i] + " ");
                         }
 
                         if (slave != null)
@@ -461,7 +456,7 @@ namespace ModbusSyncStructLIb
                             {
                                 //int limit = TableUsedforRegisters.limitregxfortransfer - TableUsedforRegisters.count_packet;
                                 
-                                if (e.StartAddress>= TableUsedforRegisters.limitregxfortransfer)
+                                if (e.StartAddress== TableUsedforRegisters.limitregxfortransfer)
                                 {
                                     for (int i = 0; i < e.Data.B.Count; i++)
                                     {
@@ -470,8 +465,8 @@ namespace ModbusSyncStructLIb
                                     }
                                     
                                     SavePreviousByte(TableUsedforRegisters.limitregxfortransfer, count_packetsend);
-                                    count_packetsend++;
                                     ProcessingInfopaket(receive_packet_data);
+                                    count_packetsend++;
                                     
                                 }
                                 else
@@ -565,6 +560,7 @@ namespace ModbusSyncStructLIb
 
                         //в случии если пакет прервался то обнуляем
                         countrecivedcount = 0;
+                        count_packetsend = 0;
                     }
 
                     slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
@@ -621,6 +617,7 @@ namespace ModbusSyncStructLIb
 
                         //в случии если пакет прервался то обнуляем
                         countrecivedcount = 0;
+                        count_packetsend = 0;
                     }
                     slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                 }
@@ -686,7 +683,6 @@ namespace ModbusSyncStructLIb
         /// </summary>
         private void ProcessingInfopaketInception()
         {
-            logger.Info("Получен первый инфопакет:");
             for (int i = 0; i < receivedpacket.Length; i++)
             {
                 data_byte_for_processing[i] = receivedpacket[i];
@@ -698,7 +694,6 @@ namespace ModbusSyncStructLIb
             {
                 slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
             }
-            logger.Info("Обработан первый инфопакет:");
             //writebyte(receivedpacket);
         }
         
@@ -722,8 +717,6 @@ namespace ModbusSyncStructLIb
                     slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
                     //writebyte(receivedpacket);
                 }
-
-                logger.Info("Обработан серединный инфопакет");
             }
             catch (Exception ex)
             {
@@ -752,7 +745,7 @@ namespace ModbusSyncStructLIb
 
                 //Обнуление переданных пакетов
                 logger.Info("обнуление переданных пакетов");
-                //countrecivedcount = 0;
+                countrecivedcount = 0;
 
                 //собираем класс
                 Console.WriteLine("Деархивация и десериализация объекта");
@@ -781,7 +774,7 @@ namespace ModbusSyncStructLIb
             
             if (count_packetsend==0)
             {
-                for (int i = 10; i < countDataStructUsshort + 10; i++)
+                for (int i = 10; i < countDataStructUsshort + TableUsedforRegisters.count_packet; i++)
                 {
                     date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
                     j++;
@@ -791,22 +784,21 @@ namespace ModbusSyncStructLIb
             }
             else
             {
-                int countrecivedcountushort = (countrecivedcount / 2);
-                int receivedpacket_ushort = receivedpacket.Length / 2;
+                j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer);
 
+                //int deltaushort = Math.Abs(countDataStructUsshort- j);
 
+                int delta = Math.Abs((j + TableUsedforRegisters.limitregxfortransfer + TableUsedforRegisters.count_packet) - date_moreregxushort.Length);
 
-                j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer - 10 + TableUsedforRegisters.count_packet);
-
-                int deltaushort = (countDataStructUsshort- j);
-
-                for (int i = 10; i < deltaushort + 10; i++)
+                for (int i = 10; i < TableUsedforRegisters.limitregxfortransfer + TableUsedforRegisters.count_packet - delta+10; i++)
                 {
                     date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
                     j++;
                 }
+
                 Buffer.BlockCopy(date_moreregxushort, 0, date_moreregx, 0, date_moreregx.Length);
-                date_moreregx[0] = 93;
+
+                //date_moreregx[0] = 93;
             }
             countrecivedcount = 0;
             bool isEqual = Enumerable.SequenceEqual(data_byte_for_processing, date_moreregx);
@@ -822,7 +814,7 @@ namespace ModbusSyncStructLIb
             count_packetsend = 0;
 
 
-
+            slave.DataStore.HoldingRegisters[1] = SlaveState.havechecktotime;
 
 
             ArchiveCode(date_moreregx);
@@ -836,17 +828,43 @@ namespace ModbusSyncStructLIb
             int j = 0;
             if (count_packetsend==0)
             {
-                j = count_packetsend * (limit - 10);
+                j = 0;
+
+                for (int i = 10; i < limit + TableUsedforRegisters.count_packet; i++)
+                {
+                    date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
+                    j++;
+                }
+
             }
             else
             {
-                j = count_packetsend * (limit - 10+ TableUsedforRegisters.count_packet);
-            }
+                j = count_packetsend * (limit);
 
-            for (int i = 10; i < limit+TableUsedforRegisters.count_packet; i++)
-            {
-                date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
-                j++;
+                if (j+limit + TableUsedforRegisters.count_packet< date_moreregxushort.Length)
+                {
+                    
+                    for (int i = 10; i < limit + TableUsedforRegisters.count_packet; i++)
+                    {
+                        date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
+                        j++;
+                    }
+                }
+                else
+                {
+                    int delta = (j+TableUsedforRegisters.count_packet+limit)- date_moreregxushort.Length;
+                    
+                    for (int i = 10; i < limit + TableUsedforRegisters.count_packet+10- delta; i++)
+                    {
+                        date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
+                        j++;
+                    }
+
+
+                }
+
+
+
             }
         }
 
@@ -908,6 +926,8 @@ namespace ModbusSyncStructLIb
                     slave.DataStore.HoldingRegisters[1] = SlaveState.havechecktotime;
                     logger.Info("В регистр состояние готов принимать пакеты" + slave.DataStore.HoldingRegisters[1]);
                 }
+
+                slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
 
                 all_get_packet = 0;
                 status_bar = 100;

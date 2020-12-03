@@ -586,20 +586,6 @@ namespace ModbusSyncStructLIb
             //logger.Info("Преобразование в ushort:Начато");
             Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);
 
-            //logger.Info("Преобразования в ushort");
-
-            //Вывод данных
-            //write_console(date_modbus);
-
-            //byte[] date_unpack = new byte[date.Length];
-
-            /* перевод из байтов в юшорт
-            Buffer.BlockCopy(date_modbus, 0, date_unpack, 0, date.Length);
-            Console.WriteLine("");
-            write_console(date_unpack);
-            Console.WriteLine("");
-            */
-
             try
             {
                 ellapledTicks = DateTime.Now.Ticks;
@@ -608,22 +594,15 @@ namespace ModbusSyncStructLIb
                 
                 status_slave = SendRequestForStatusSlave();
                 
-                logger.Info("Cтатус Slave " + status_slave);
-
                 //есть свободное время у slave для отправки
                 if (status_slave == SlaveState.have_free_time)
                 {
-                    logger.Info("Статус свободен:");
-
-                    //SendStatusforSlave(SlaveState.havetimetransfer);
-
                     //Отправка кол-во байт
                     SendPaketWithCountBytes(date.Length);
 
                     //logger.Info("Статус свободен:");
 
                     logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
-                    logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
                     
                     ellapledTicks = DateTime.Now.Ticks;
                     //если данные больше чем переданных
@@ -637,7 +616,6 @@ namespace ModbusSyncStructLIb
                     {
                         logger.Trace("Передача меньше чем, пакет");
 
-                        //SendStatusforSlave(SlaveState.havetimetransfer);
                         //Отправка кол-во байт
 
                         if (master != null)
@@ -703,22 +681,21 @@ namespace ModbusSyncStructLIb
         private void MoreThanTransfer(ushort coilAddress,ushort[] date_modbus)
         {
             int countneedsend = (date_modbus.Length / count_send_packet) + 1;
-            int k = 0;
-            //Console.WriteLine("Будет отправлено " + countneedsend + " пакетов");
+
             logger.Info("Будет отправлено " + countneedsend + " пакетов");
 
             status_bar_temp = 100 / Convert.ToDouble(countneedsend);
             //кол-во отправок
+            coilAddress = TableUsedforRegisters.start_send_regx;
+
             for (int i = 0; i < countneedsend; i++)
-            {
-                
+            { 
                 //если пользователь отменил передачу
                 if (stoptransfer_signal == true)
                 {
                     logger.Warn("Пользователь отменил передачу");
                     status_bar = 0;
                     SendSingleMessage(SlaveState.haveusercanceltransfer, TableUsedforRegisters.StateSlaveRegisters);
-                    //SendSingleMessage(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters);
                     return;
                 }
 
@@ -737,7 +714,6 @@ namespace ModbusSyncStructLIb
                 {
                     if (coilAddress >= TableUsedforRegisters.limitregxfortransfer)
                     {
-                        //coilAddress = TableUsedforRegisters.start_send_regx;
                         SendTypePacket(coilAddress, date_modbus, i, countneedsend);
                         coilAddress = TableUsedforRegisters.start_send_regx;
                     }
@@ -746,11 +722,6 @@ namespace ModbusSyncStructLIb
                         SendTypePacket(coilAddress, date_modbus, i, countneedsend);
                         coilAddress += Convert.ToUInt16(count_send_packet);
                     }
-
-                    //int temp_sstartaddr = Convert.ToInt32(coilAddress);
-                    //temp_sstartaddr += count_send_packet;
-                    //coilAddress = Convert.ToUInt16(temp_sstartaddr);
-
                     
                     Thread.Sleep(50);
                 }
@@ -802,8 +773,7 @@ namespace ModbusSyncStructLIb
         private void EndPacketTrasferSend(int i, ushort coilAddress, ushort[] date_modbus, byte[] date)
         {
             int k = 0;
-            //Console.WriteLine("Отправка " + i + " пакета");
-            logger.Trace("Отправка " + i + " пакета");
+
             int count_send_packet = TableUsedforRegisters.count_packet;
             sentpacket = new ushort[TableUsedforRegisters.count_packet];
             for (int j = i * count_send_packet; j < date_modbus.Length; j++)
@@ -812,9 +782,6 @@ namespace ModbusSyncStructLIb
                 k++;
             }
             
-            //вывод в консоль
-            //write_console(sentpacket);
-
             //если slave свободен то отправляем
             if (master != null)
             {
@@ -826,7 +793,6 @@ namespace ModbusSyncStructLIb
                 masterTCP.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
             }
 
-            logger.Trace("Отправлен " + i + " пакета");
             Thread.Sleep(50);
 
             //Контрольная сумма
@@ -855,8 +821,6 @@ namespace ModbusSyncStructLIb
             sentpacket = new ushort[TableUsedforRegisters.count_packet];
             int count_send_packet = TableUsedforRegisters.count_packet;
 
-            //Console.WriteLine("Отправка " + i + " пакета");
-            logger.Trace("Отправка " + i + " пакета");
             for (int j = i * count_send_packet; j < (i + 1) * count_send_packet; j++)
             {
                 sentpacket[k] = date_modbus[j];
@@ -873,16 +837,11 @@ namespace ModbusSyncStructLIb
                 return;
             }
 
-            //вывод в консоль
-            //write_console(sentpacket);
-
             //если slave свободен то отправляем
             if (master != null)
             {
                 master.WriteMultipleRegisters(slaveID, coilAddress, sentpacket);
             }
-
-            logger.Trace("Отпралено " + i + " пакета");
 
             state_master = 0;
             Thread.Sleep(10);
@@ -929,16 +888,7 @@ namespace ModbusSyncStructLIb
                 count = (date.Length / 2) + 1;
                 ushort[] date_modbus = new ushort[date.Length / 2 + 1];
 
-                //Кол-во переднных какналов за 1 запрос
-                int count_send_packet = 70;
-
                 ushort[] sentpacket = new ushort[count_send_packet];
-
-                //вывод в консоль
-                //write_console(date);
-                //Console.WriteLine("");
-
-                //конвертирует в ushort
 
                 //logger.Info("Преобразование в ushort: Начато");
                 Buffer.BlockCopy(date, 0, date_modbus, 0, date.Length);

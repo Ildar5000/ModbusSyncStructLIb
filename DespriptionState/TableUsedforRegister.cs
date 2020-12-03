@@ -48,16 +48,16 @@ namespace ModbusSyncStructLIb.DespriptionState
         /// <summary>
         /// Диагностика
         /// </summary>
-        public const ushort diagnostik_send = 9;
+        public const ushort diagnostik_send = 8;
 
 
         /// <summary>
         /// Кол-во переднных какналов за 1 запрос
         /// </summary>
-        public const int count_packet = 70;
+        public const int count_packet = 10;
 
 
-        public const ushort limitregxfortransfer=1010;
+        public const ushort limitregxfortransfer=110;
 
 
         public const ushort start_send_regx=10;
