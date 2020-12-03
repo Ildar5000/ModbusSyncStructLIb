@@ -90,7 +90,6 @@ namespace ModbusSyncStructLIb
 
         double alltranferendpacket=0;
 
-        int count_send_packet = TableUsedforRegisters.count_packet;
         #endregion
 
         /// <summary>
@@ -573,7 +572,7 @@ namespace ModbusSyncStructLIb
             ushort[] date_modbus = new ushort[date.Length / 2 + 1];
 
             //Кол-во переднных какналов за 1 запрос
-            count_send_packet = TableUsedforRegisters.count_packet;
+            int count_send_packet = TableUsedforRegisters.count_packet;
             
             //передача за 1 раз
             sentpacket = new ushort[count_send_packet];
@@ -632,7 +631,7 @@ namespace ModbusSyncStructLIb
                     
                     if (date_modbus.Length > count_send_packet)
                     {
-                        MoreThanTransfer(coilAddress,date_modbus);
+                        MoreThanTransfer(coilAddress,date_modbus, count_send_packet);
 
                     }
                     else    //в случае если пакет меньше чем ограничения
@@ -702,7 +701,7 @@ namespace ModbusSyncStructLIb
         /// <summary>
         /// функция где объем больше чем пакете
         /// </summary>
-        private void MoreThanTransfer(ushort coilAddress,ushort[] date_modbus)
+        private void MoreThanTransfer(ushort coilAddress,ushort[] date_modbus, int count_send_packet)
         {
             int countneedsend = (date_modbus.Length / count_send_packet) + 1;
             int k = 0;
@@ -737,24 +736,13 @@ namespace ModbusSyncStructLIb
                 status_slave = SendRequestForStatusSlave();
                 if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
                 {
-                    if (coilAddress >= TableUsedforRegisters.limitregxfortransfer)
-                    {
-                        //coilAddress = TableUsedforRegisters.start_send_regx;
-                        SendTypePacket(coilAddress, date_modbus, i, countneedsend);
-                        coilAddress = TableUsedforRegisters.start_send_regx;
-                    }
-                    else
-                    {
-                        SendTypePacket(coilAddress, date_modbus, i, countneedsend);
-                        coilAddress += Convert.ToUInt16(count_send_packet);
-                    }
+                    SendTypePacket(coilAddress, date_modbus, i, countneedsend);
 
                     //int temp_sstartaddr = Convert.ToInt32(coilAddress);
                     //temp_sstartaddr += count_send_packet;
                     //coilAddress = Convert.ToUInt16(temp_sstartaddr);
 
-                    
-                    Thread.Sleep(50);
+                    coilAddress += Convert.ToUInt16(count_send_packet);
                 }
                  else
                 {
@@ -971,7 +959,7 @@ namespace ModbusSyncStructLIb
                         //если данные больше чем переданных
                         if (date_modbus.Length > count_send_packet)
                         {
-                            MoreThanTransfer(coilAddress, date_modbus);
+                            MoreThanTransfer(coilAddress, date_modbus, count_send_packet);
 
                             state_master = 0;
                             logger.Info("Попытка передачи " + count_try_recurs + "Удачное");
