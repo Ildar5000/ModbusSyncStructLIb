@@ -80,7 +80,7 @@ namespace ModbusSyncStructLIb
 
         public TimeSpan elapsedSpan;
 
-        
+        public int timeRecoveraftercrash = 3000;
 
         byte[] date;
         ushort[] sentpacket;

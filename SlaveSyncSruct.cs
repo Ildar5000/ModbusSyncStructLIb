@@ -42,6 +42,7 @@ namespace ModbusSyncStructLIb
         public ushort randnumber = 0;
 
         public bool try_reboot_connection = true;
+        public int timeRecoveraftercrash = 3000;
 
         int TypeModbus=0;
 
@@ -458,8 +459,6 @@ namespace ModbusSyncStructLIb
                         {
                             if (slave.DataStore.HoldingRegisters[1]!= SlaveState.haveusercanceltransfer)
                             {
-                                //Console.WriteLine("Пришел пакет с данными:");
-                                logger.Info("Пришел пакет с данными:");
                                 //int limit = TableUsedforRegisters.limitregxfortransfer - TableUsedforRegisters.count_packet;
                                 
                                 if (e.StartAddress>= TableUsedforRegisters.limitregxfortransfer)
