@@ -45,6 +45,8 @@ namespace ModbusSyncStructLIb
 
         int TypeModbus=0;
 
+        public int timeRecoveraftercrash = 30 * 1000;
+
         private static Logger logger;
         //События
         #region События
@@ -137,6 +139,8 @@ namespace ModbusSyncStructLIb
                     try_reboot_connection = settings.try_reboot_connection;
                     deltaTimeCheck = settings.deltatimeManager;
 
+                    timeRecoveraftercrash = settings.tryconnectionaftercrash;
+
                     if (settings.typeModbus != 2)
                     {
                         serialPort = new SerialPort(settings.ComName);
@@ -206,24 +210,6 @@ namespace ModbusSyncStructLIb
                     logger.Error("Нет файла настроек");
                 }
 
-
-                /*
-                PropertiesSetting propertiesSetting = new PropertiesSetting();
-                slaveID = 1;
-                serialPort = new SerialPort(propertiesSetting.PortName);
-
-                serialPort.PortName = propertiesSetting.PortName;
-                serialPort.BaudRate = propertiesSetting.BaudRate;
-                serialPort.DataBits = propertiesSetting.DataBits;
-                TypeModbus = propertiesSetting.TypeComModbus;
-
-                serialPort.Parity = Parity.None;
-                serialPort.StopBits = StopBits.One;
-
-                serialPort.ReadTimeout = 1000;
-                serialPort.WriteTimeout = 1000;
-                */
-
                 receivedpacket = new byte[count_send_packet * 2];
                 receive_packet_data = new ushort[count_send_packet];
                 //data_byte= new byte[count_send_packet*2];
@@ -234,6 +220,7 @@ namespace ModbusSyncStructLIb
             {
                 stateSlave = SlaveState.haveerror;
                 logger.Error(ex);
+                logger.Error("Неправильный настройки, пожалуйста проверьте");
             }
             
         }
@@ -259,7 +246,7 @@ namespace ModbusSyncStructLIb
                     slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
                     slave.DataStore.HoldingRegisters[1] = 0;
                     
-                    logger.Info("Slave состояние" + slave.DataStore.HoldingRegisters[1]);
+                    //logger.Info("Slave состояние" + slave.DataStore.HoldingRegisters[1]);
 
                     var listenTask = slave.ListenAsync();
                 }
@@ -279,7 +266,7 @@ namespace ModbusSyncStructLIb
                     slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                     slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
                     slave.DataStore.HoldingRegisters[1] = 0;
-                    logger.Info("Slave состояние" + slave.DataStore.HoldingRegisters[1]);
+                    //logger.Info("Slave состояние" + slave.DataStore.HoldingRegisters[1]);
 
 
                     var listenTask = slave.ListenAsync();
@@ -311,12 +298,6 @@ namespace ModbusSyncStructLIb
                     
                     slave.DataStore.HoldingRegisters[1] = 0;
 
-                    for(int i=2;i<10000;i++)
-                    {
-                        slave.DataStore.HoldingRegisters[i] = 0;
-                    }
-                    
-
                     Task listenTask= slave.ListenAsync();
                     logger.Info("Slave Ожидание");
                   
@@ -347,7 +328,13 @@ namespace ModbusSyncStructLIb
                 {
                     serialPort.Close();
                 }
-                
+
+                status_bar = 0;
+                if (ListenerTCP != null)
+                {
+                    ListenerTCP.Stop();
+                }
+
             }
         }
 
@@ -362,6 +349,7 @@ namespace ModbusSyncStructLIb
                 Thread.Sleep(400);
                 slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                 have_trasfer = false;
+                status_bar = 0;
             }
         }
         
@@ -401,6 +389,13 @@ namespace ModbusSyncStructLIb
                         //про состояние 
                         if (slave != null)
                         {
+                            if (e.StartAddress == TableUsedforRegisters.CR16)
+                            {
+                                slave.DataStore.HoldingRegisters[TableUsedforRegisters.CR16] = e.Data.B[0];
+                                CheckCRC16(e.Data.B[0]);
+                            }
+
+
                             if (e.StartAddress==TableUsedforRegisters.diagnostik_send)
                             {
                                 slave.DataStore.HoldingRegisters[TableUsedforRegisters.diagnostik_send] = e.Data.B[0];
@@ -417,7 +412,7 @@ namespace ModbusSyncStructLIb
                                     slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
                                     have_trasfer = false;
                                     ProcessingSingleregx(e.Data.B[0]);
-                                    
+                                    status_bar = 0;
                                 }
                                 else
                                 {
@@ -518,6 +513,20 @@ namespace ModbusSyncStructLIb
             }
         }
 
+        private void CheckCRC16(ushort v)
+        {
+            //logger.Info("Состояние slave проверка контрольной суммы");
+            // В случае если идет проверка системы
+            if (cr16 == v)
+            {
+                slave.DataStore.HoldingRegisters[5] = StateCR.haveNotError;
+                logger.Info("(проверка CR16 состоялась)" + slave.DataStore.HoldingRegisters[5]);
+                slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                //logger.Info("Сумма совпала " + SlaveState.have_free_time);
+            }
+        }
+
+
         public void ProcessingDiag(ushort v)
         {
             if (randnumber!=v)
@@ -609,8 +618,7 @@ namespace ModbusSyncStructLIb
                         logger.Info("Получен объем данных в байт:" + countDataStruct);
 
                         int dataushort = (countDataStruct / 2) + 1;
-                        //Console.WriteLine("Получен объем данных в ushort:" + dataushort);
-                        logger.Info("Получен объем данных в ushort:" + dataushort);
+                        //logger.Info("Получен объем данных в ushort:" + dataushort);
 
                         data_byte_for_processing = new byte[countDataStruct];
                         countDataStructUsshort = (countDataStruct / 2) + 1;
@@ -672,8 +680,12 @@ namespace ModbusSyncStructLIb
             }
             catch(Exception ex)
             {
+                stateSlave = SlaveState.haveerror;
+                statusbar_value_repeat = 0;
                 logger.Error(ex);
                 have_trasfer = false;
+                Thread.Sleep(300);
+                UpdateAfteError();
             }
             
         }
@@ -687,7 +699,6 @@ namespace ModbusSyncStructLIb
         /// </summary>
         private void ProcessingInfopaketInception()
         {
-            logger.Info("Получен первый инфопакет:");
             for (int i = 0; i < receivedpacket.Length; i++)
             {
                 data_byte_for_processing[i] = receivedpacket[i];
@@ -699,8 +710,6 @@ namespace ModbusSyncStructLIb
             {
                 slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
             }
-            logger.Info("Обработан первый инфопакет:");
-            //writebyte(receivedpacket);
         }
         
         /// <summary>
@@ -723,8 +732,6 @@ namespace ModbusSyncStructLIb
                     slave.DataStore.HoldingRegisters[1] = SlaveState.havetimetransfer;
                     //writebyte(receivedpacket);
                 }
-
-                logger.Info("Обработан серединный инфопакет");
             }
             catch (Exception ex)
             {
@@ -747,16 +754,9 @@ namespace ModbusSyncStructLIb
                 {
                     data_byte_for_processing[delta_start_mid + i] = receivedpacket[i];
                 }
-
-                logger.Info("Обработан конечный инфопакет");
-                //writebyte(data_byte_for_processing);
-
-                //Обнуление переданных пакетов
-                logger.Info("обнуление переданных пакетов");
                 //countrecivedcount = 0;
 
                 //собираем класс
-                Console.WriteLine("Деархивация и десериализация объекта");
 
                 //Сlass_Deserialization(data_byte_for_processing);
                 //ArchiveCode(data_byte_for_processing);
@@ -772,61 +772,56 @@ namespace ModbusSyncStructLIb
             //date_moreregx
             //date_moreregxushort
 
-            //int j = 0;
-            int delta_start_mid = Math.Abs(countrecivedcount - receivedpacket.Length);
-            int delta_countreciveAndSend = Math.Abs(countDataStruct - delta_start_mid);
-                      
-            //countDataStructUsshort
+            try
+            {
+                //int j = 0;
+                int delta_start_mid = Math.Abs(countrecivedcount - receivedpacket.Length);
+                int delta_countreciveAndSend = Math.Abs(countDataStruct - delta_start_mid);
 
-            int j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer-10);
+                //countDataStructUsshort
+
+                int j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer - 10);
+
+                if (count_packetsend == 0)
+                {
+                    for (int i = 10; i < countDataStructUsshort + 10; i++)
+                    {
+                        date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
+                        j++;
+                    }
+                    Buffer.BlockCopy(date_moreregxushort, 0, date_moreregx, 0, date_moreregx.Length);
+                    date_moreregx[0] = 93;
+                }
+                else
+                {
+                    int countrecivedcountushort = (countrecivedcount / 2);
+                    int receivedpacket_ushort = receivedpacket.Length / 2;
+
+                    j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer - 10 + TableUsedforRegisters.count_packet);
+
+                    int deltaushort = (countDataStructUsshort - j);
+
+                    for (int i = 10; i < deltaushort + 10; i++)
+                    {
+                        date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
+                        j++;
+                    }
+                    Buffer.BlockCopy(date_moreregxushort, 0, date_moreregx, 0, date_moreregx.Length);
+                    date_moreregx[0] = 93;
+                }
+                countrecivedcount = 0;
+                count_packetsend = 0;
+
+                ArchiveCode(date_moreregx);
+            }
+            catch(Exception ex)
+            {
+                stateSlave = SlaveState.haveerror;
+                logger.Error(ex);
+                Thread.Sleep(300);
+                UpdateAfteError();
+            }
             
-            if (count_packetsend==0)
-            {
-                for (int i = 10; i < countDataStructUsshort + 10; i++)
-                {
-                    date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
-                    j++;
-                }
-                Buffer.BlockCopy(date_moreregxushort, 0, date_moreregx, 0, date_moreregx.Length);
-                date_moreregx[0] = 93;
-            }
-            else
-            {
-                int countrecivedcountushort = (countrecivedcount / 2);
-                int receivedpacket_ushort = receivedpacket.Length / 2;
-
-
-
-                j = count_packetsend * (TableUsedforRegisters.limitregxfortransfer - 10 + TableUsedforRegisters.count_packet);
-
-                int deltaushort = (countDataStructUsshort- j);
-
-                for (int i = 10; i < deltaushort + 10; i++)
-                {
-                    date_moreregxushort[j] = slave.DataStore.HoldingRegisters[i];
-                    j++;
-                }
-                Buffer.BlockCopy(date_moreregxushort, 0, date_moreregx, 0, date_moreregx.Length);
-                date_moreregx[0] = 93;
-            }
-            countrecivedcount = 0;
-            bool isEqual = Enumerable.SequenceEqual(data_byte_for_processing, date_moreregx);
-
-            for (int i=0; i< data_byte_for_processing.Length;i++)
-            {
-                if (data_byte_for_processing[i]!= date_moreregx[i])
-                {
-                    Console.WriteLine(i);
-                }
-
-            }
-            count_packetsend = 0;
-
-
-
-
-
-            ArchiveCode(date_moreregx);
 
             
         }
