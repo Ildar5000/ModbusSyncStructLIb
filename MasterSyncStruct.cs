@@ -599,10 +599,6 @@ namespace ModbusSyncStructLIb
                 {
                     //Отправка кол-во байт
                     SendPaketWithCountBytes(date.Length);
-
-                    //logger.Info("Статус свободен:");
-
-                    logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
                     
                     ellapledTicks = DateTime.Now.Ticks;
                     //если данные больше чем переданных
@@ -636,7 +632,7 @@ namespace ModbusSyncStructLIb
                         ellapledTicks = DateTime.Now.Ticks - ellapledTicks;
                         elapsedSpan = new TimeSpan(ellapledTicks);
 
-                        logger.Info("Передан за " + elapsedSpan.TotalSeconds + "Секунд");
+                        logger.Info("Передан за " + Math.Round(elapsedSpan.TotalSeconds,1) + " Сек.");
                         stoptransfer_signal = false;
                     }
 

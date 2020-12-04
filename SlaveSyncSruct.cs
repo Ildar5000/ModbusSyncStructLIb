@@ -414,7 +414,6 @@ namespace ModbusSyncStructLIb
 
                                 if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
                                 {
-                                    logger.Info("Перешел в состояние " + e.Data.B[0] + " Отмена");
                                     slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
                                     have_trasfer = false;
                                     ProcessingSingleregx(e.Data.B[0]);
@@ -422,7 +421,6 @@ namespace ModbusSyncStructLIb
                                 }
                                 else
                                 {
-                                    logger.Info("Перешел в состояние " + e.Data.B[0] + " обработка");
                                     ProcessingSingleregx(e.Data.B[0]);
                                 }
                             }  
@@ -544,13 +542,9 @@ namespace ModbusSyncStructLIb
                     if (date > 70)
                     {
                         countDataStruct = Convert.ToInt32(date);
-                        //Console.WriteLine("Получен объем данных в байт:" + countDataStruct);
                         logger.Info("Получен объем данных в байт:" + countDataStruct);
 
                         int dataushort = (countDataStruct / 2) + 1;
-                        //Console.WriteLine("Получен объем данных в ushort:" + dataushort);
-                        logger.Info("Получен объем данных в ushort:" + dataushort);
-
                         data_byte_for_processing = new byte[countDataStruct];
                         countDataStructUsshort = (countDataStruct / 2) + 1;
 
@@ -568,7 +562,6 @@ namespace ModbusSyncStructLIb
                 }
                 if (slave.DataStore.HoldingRegisters[1] == SlaveState.havechecktotime)
                 {
-                    logger.Info("Состояние slave проверка контрольной суммы");
                     // В случае если идет проверка системы
                     if (cr16 == date)
                     {
@@ -600,12 +593,9 @@ namespace ModbusSyncStructLIb
                         int back = (v[1] << 16) | v[0];
                         countDataStruct = back;
 
-                        //Console.WriteLine("Получен объем данных в байт:" + countDataStruct);
                         logger.Info("Получен объем данных в байт:" + countDataStruct);
 
                         int dataushort = (countDataStruct / 2) + 1;
-                        //Console.WriteLine("Получен объем данных в ushort:" + dataushort);
-                        logger.Info("Получен объем данных в ushort:" + dataushort);
 
                         data_byte_for_processing = new byte[countDataStruct];
                         countDataStructUsshort = (countDataStruct / 2) + 1;
@@ -632,7 +622,6 @@ namespace ModbusSyncStructLIb
         {
             try
             {
-                Console.WriteLine("Обработка инфопакета Slave занят:");
                 //перводим в массив байт
                 Buffer.BlockCopy(date, 0, receivedpacket, 0, receivedpacket.Length);
 
@@ -739,9 +728,6 @@ namespace ModbusSyncStructLIb
                 {
                     data_byte_for_processing[delta_start_mid + i] = receivedpacket[i];
                 }
-
-                logger.Info("Обработан конечный инфопакет");
-                //writebyte(data_byte_for_processing);
 
                 //Обнуление переданных пакетов
                 logger.Info("обнуление переданных пакетов");
