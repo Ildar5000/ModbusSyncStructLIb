@@ -597,7 +597,7 @@ namespace ModbusSyncStructLIb
                         ellapledTicks = DateTime.Now.Ticks - ellapledTicks;
                         elapsedSpan = new TimeSpan(ellapledTicks);
 
-                        logger.Info("Передан за " + elapsedSpan.TotalSeconds + "Секунд");
+                        logger.Info("Передан за " + Math.Round(elapsedSpan.TotalSeconds,1) + "Секунд");
                         stoptransfer_signal = false;
                     }
 
