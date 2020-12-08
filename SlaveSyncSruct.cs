@@ -291,7 +291,6 @@ namespace ModbusSyncStructLIb
 
                     Task listenTask= slave.ListenAsync();
                     logger.Info("Slave Ожидание");
-                  
                 }
                 
             }

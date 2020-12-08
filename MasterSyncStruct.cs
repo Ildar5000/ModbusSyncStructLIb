@@ -266,7 +266,7 @@ namespace ModbusSyncStructLIb
                 {
                     logger.Info("Создания modbus modbusIp");
                     TcpClient client = new TcpClient();
-                    client.BeginConnect(IP_client, IP_client_port, null, null);
+                    client.Connect(IP_client, IP_client_port);
                     master = ModbusIpMaster.CreateIp(client);
                 }
             }
@@ -275,7 +275,7 @@ namespace ModbusSyncStructLIb
                 logger.Error(ex);
                 logger.Error("Неправильный настройки, пожалуйста проверьте");
                 state_master = SlaveState.haveerror;
-                Console.WriteLine(ex);
+
                 state_master = SlaveState.have_free_time;
 
                 return;

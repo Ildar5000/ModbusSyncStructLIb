@@ -131,7 +131,7 @@ namespace ModbusSyncStructLIb.CheckConnect
             catch (Exception ex)
             {
                 Thread.Sleep(timeRecoveraftercrash);
-                logger.Error(ex);
+                //logger.Error(ex);
                 Stop();
             }
             while (islive)
@@ -182,12 +182,13 @@ namespace ModbusSyncStructLIb.CheckConnect
                 catch (Exception ex)
                 {
                     have_connection = false;
+                    logger.Error(ex);
                     Thread.Sleep(timeRecoveraftercrash);
                     Stop();
                     var sendfile = Task.Run(() => Restart());
                     
                     //logger.Trace("Cвязь Отсутствует");
-                    //logger.Error(ex);
+                    
                     //Console.WriteLine(ex);
                     break;
                 }
@@ -201,6 +202,8 @@ namespace ModbusSyncStructLIb.CheckConnect
 
         public void SlaveStart()
         {
+            ///Если нет связи
+            int count_time = 0;
             try
             {
                 slave.Open();
@@ -216,7 +219,8 @@ namespace ModbusSyncStructLIb.CheckConnect
                     if (crtime != slave.randnumber)
                     {
                         crtime = slave.randnumber;
-                        have_connection = true; 
+                        have_connection = true;
+                        count_time = 0;
                         Thread.Sleep(deltatimeSlave+300);
                     }
                     else
@@ -224,6 +228,7 @@ namespace ModbusSyncStructLIb.CheckConnect
                         crtime = slave.randnumber;
                         have_connection = false;
                         Thread.Sleep(deltatimeSlave+ 300);
+                        count_time++;
                     }
                 }
             }
