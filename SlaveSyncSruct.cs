@@ -412,7 +412,7 @@ namespace ModbusSyncStructLIb
                                 status_bar = 0;
                                 all_get_packet = 0;
 
-                                if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
+                                if (e.Data.B[0] == SlaveState.haveusercanceltransfer&&e.StartAddress>TableUsedforRegisters.StateSlaveRegisters)
                                 {
                                     slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
                                     have_trasfer = false;
@@ -636,21 +636,21 @@ namespace ModbusSyncStructLIb
 
                 if (countrecivedcount >= countDataStruct)
                 {
-                    ProcessingInfopaketEndl();
+                    //ProcessingInfopaketEndl();
                     ProcessingInfopaketEndl(true);
                 }
 
                 // начало
                 if (countrecivedcount == receivedpacket.Length)
                 {
-                    ProcessingInfopaketInception();
+                    //ProcessingInfopaketInception();
 
                     status_bar += statusbar_value_repeat;
                 }
 
                 if (countrecivedcount > receivedpacket.Length && countrecivedcount < countDataStruct)
                 {
-                    ProcessingInfopaketMiddle();
+                    //ProcessingInfopaketMiddle();
                     status_bar += statusbar_value_repeat;
                 }
 
