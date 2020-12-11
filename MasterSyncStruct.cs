@@ -608,7 +608,7 @@ namespace ModbusSyncStructLIb
                 else  //В случае если не получено данные
                 {
                     //Console.WriteLine("Пакет не может передаться, связи с тем, что Slave занят");
-                    logger.Warn("Пакет не может передаться, связи с тем, что Slave занят");
+                    logger.Warn("Пакет не может передаться, связи с тем, что Slave не доступен или занят");
                     int count_try=0;
                     RepeatTrySend(stream, count_try);
                 }
@@ -862,7 +862,7 @@ namespace ModbusSyncStructLIb
                             MoreThanTransfer(coilAddress, date_modbus, count_send_packet);
 
                             state_master = 0;
-                            logger.Info("Попытка передачи " + count_try_recurs + " Удачное");
+                            logger.Info("Попытка передачи " + count_try_recurs + ": Удачное");
                             return;
                         }
                         else    //в случае если пакет меньше чем ограничения
@@ -882,13 +882,13 @@ namespace ModbusSyncStructLIb
                     {
 
                         //Console.WriteLine("Пакет не может передаться, связи с тем, что Slave занят");
-                        logger.Warn("Пакет не может передаться, связи с тем, что Slave занят");
+                        logger.Warn("Пакет не может передаться, связи с тем, что Slave не доступен или занят");
 
                         Thread.Sleep(1000);
                         
                         if (status_slave==SlaveState.haveerror)
                         {
-                            logger.Error("Пакет не может передаться, связи с тем, что Slave возникла ошибка. Передача отменена");
+                            logger.Error("Передача отменена. Пакет не может передаться, связи с тем, что у Slave ошибка");
                         }
 
                         else
