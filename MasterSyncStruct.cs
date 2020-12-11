@@ -116,7 +116,7 @@ namespace ModbusSyncStructLIb
                         XmlSerializer formatter = new XmlSerializer(typeof(SettingsModbus));
                         settings = (SettingsModbus)formatter.Deserialize(fs);
 
-                        logger.Info("Настройки найдены");
+                        logger.Info("Конфигурация подключения найдена");
                     }
                     TypeModbus = settings.typeModbus;
                     try_reboot_connection = settings.try_reboot_connection;
@@ -184,7 +184,7 @@ namespace ModbusSyncStructLIb
                 }
                 else
                 {
-                    logger.Error("Нет файла");
+                    logger.Error("файл с настройками отсутствует");
                 }
             }
             catch (Exception ex)
@@ -229,7 +229,7 @@ namespace ModbusSyncStructLIb
                     serialPort.Open();
                     SerialPortAdapter = new SerialPortAdapter(serialPort);
 
-                    logger.Info("Создания modbus RTU");
+                    logger.Info("Создается Modbus RTU");
                     master = ModbusSerialMaster.CreateRtu(SerialPortAdapter);
                     
                     //slaveID = 1;
@@ -246,7 +246,7 @@ namespace ModbusSyncStructLIb
                     serialPort.Open();
                     SerialPortAdapter = new SerialPortAdapter(serialPort);
 
-                    logger.Info("Создания modbus Ascii");
+                    logger.Info("Создается Modbus ASCII");
                     master = ModbusSerialMaster.CreateAscii(SerialPortAdapter);
                     
                     master.Transport.Retries = 1000;
@@ -264,7 +264,7 @@ namespace ModbusSyncStructLIb
 
                 if ((TypeModbus == 2))
                 {
-                    logger.Info("Создания modbus modbusIp");
+                    logger.Info("Создается Modbus IP");
                     TcpClient client = new TcpClient();
                     client.Connect(IP_client, IP_client_port);
                     master = ModbusIpMaster.CreateIp(client);
@@ -273,7 +273,7 @@ namespace ModbusSyncStructLIb
             catch(Exception ex)
             {
                 logger.Error(ex);
-                logger.Error("Неправильный настройки, пожалуйста проверьте");
+                logger.Error("Неправильные настройки, пожалуйста проверьте");
                 state_master = SlaveState.haveerror;
 
                 state_master = SlaveState.have_free_time;
@@ -321,14 +321,14 @@ namespace ModbusSyncStructLIb
                 StopTransfer();
                 if (master != null)
                 {
-                    logger.Warn("Остановлен мастер");
+                    logger.Warn("Мастер остановлен");
                     master.Dispose();
                    
                 }
 
                 if (serialPort!=null)
                 {
-                    logger.Warn("Закрыт порт");
+                    logger.Warn("порт закрыт ");
                     serialPort.Close();
                 }
             }
@@ -565,7 +565,7 @@ namespace ModbusSyncStructLIb
                 {
                     //Отправка кол-во байт
                     SendPaketWithCountBytes(date.Length);
-                    logger.Info("Отправляем метапкет с кол-вом данных байт" + date.Length);
+                    logger.Info("Отправляется метапакет с кол-вом данных байт" + date.Length);
                     //logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
                     
                     ellapledTicks = DateTime.Now.Ticks;
@@ -576,7 +576,7 @@ namespace ModbusSyncStructLIb
                     }
                     else    //в случае если пакет меньше чем ограничения
                     {
-                        logger.Trace("Передача меньше чем, пакет");
+                        logger.Trace("Передача меньше чем, содержится в пакете");
                         if (master != null)
                         {
                             master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
@@ -597,7 +597,7 @@ namespace ModbusSyncStructLIb
                         ellapledTicks = DateTime.Now.Ticks - ellapledTicks;
                         elapsedSpan = new TimeSpan(ellapledTicks);
 
-                        logger.Info("Передан за " + Math.Round(elapsedSpan.TotalSeconds,1) + "Секунд");
+                        logger.Info("Передан за " + Math.Round(elapsedSpan.TotalSeconds,1) + " Сек.");
                         stoptransfer_signal = false;
                     }
 
@@ -862,7 +862,7 @@ namespace ModbusSyncStructLIb
                             MoreThanTransfer(coilAddress, date_modbus, count_send_packet);
 
                             state_master = 0;
-                            logger.Info("Попытка передачи " + count_try_recurs + "Удачное");
+                            logger.Info("Попытка передачи " + count_try_recurs + " Удачное");
                             return;
                         }
                         else    //в случае если пакет меньше чем ограничения
@@ -873,7 +873,7 @@ namespace ModbusSyncStructLIb
                             //SendStatusforSlave(SlaveState.havetimetransfer);
                             //Отправка кол-во байт
                             master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
-                            logger.Info("Попытка передачи " + count_try_recurs + "Удачное");
+                            logger.Info("Попытка передачи " + count_try_recurs + " Удачное");
                             return;
                         }
                         
