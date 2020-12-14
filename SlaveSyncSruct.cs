@@ -762,7 +762,7 @@ namespace ModbusSyncStructLIb
                     }
                     else
                     {
-                        logger.Warn("Данные не актуальные, уточните дельту или данные пришло поздно");
+                        logger.Warn("Slave: Данные не актуальные, уточните дельту или данные пришло поздно");
                     }
                 }
                 else
@@ -810,7 +810,7 @@ namespace ModbusSyncStructLIb
                 MemoryStream memory =Decompress(stream,false);
                 byte[] class_outdecompress = memory.ToArray();
 
-                logger.Info("Декомпрессия прошла успешна ");
+                logger.Info("Slave: Декомпрессия прошла успешна ");
                 
                 СlassDeserialization(class_outdecompress);
                 return;
