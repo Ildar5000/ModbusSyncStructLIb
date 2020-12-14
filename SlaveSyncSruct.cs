@@ -414,7 +414,7 @@ namespace ModbusSyncStructLIb
                                 status_bar = 0;
                                 all_get_packet = 0;
 
-                                if (e.Data.B[0] == SlaveState.haveusercanceltransfer&&e.StartAddress>TableUsedforRegisters.StateSlaveRegisters)
+                                if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
                                 {
                                     logger.Info("Slave: Перешел в состояние отмена передачи объекта");
                                     slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
