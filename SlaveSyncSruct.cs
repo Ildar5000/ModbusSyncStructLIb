@@ -204,7 +204,7 @@ namespace ModbusSyncStructLIb
                 }
                 else
                 {
-                    logger.Error("файл с настройками отсутствует");
+                    logger.Error("Slave: файл с настройками отсутствует");
                 }
 
                 receivedpacket = new byte[count_send_packet * 2];
@@ -217,7 +217,7 @@ namespace ModbusSyncStructLIb
             {
                 stateSlave = SlaveState.haveerror;
                 logger.Error(ex);
-                logger.Error("Неправильный настройки, пожалуйста проверьте");
+                logger.Error("Slave: Неправильный настройки, пожалуйста проверьте");
             }
             
         }
@@ -230,13 +230,13 @@ namespace ModbusSyncStructLIb
                 {
                     serialPort.Open();
                     SerialPortAdapter = new SerialPortAdapter(serialPort);
-                    logger.Info("Создания Modbus RTU");
+                    logger.Info("Slave: Создания Modbus RTU");
                     slave = ModbusSerialSlave.CreateRtu(slaveID, SerialPortAdapter);
                     
                     slave.Transport.WriteTimeout = 1000;
                     slave.Transport.ReadTimeout = 1000;
                     
-                    logger.Info("Slave подключен");
+                    logger.Info("Slave: Slave подключен");
                     slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                     slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
                     slave.DataStore.HoldingRegisters[1] = 0;
@@ -251,13 +251,13 @@ namespace ModbusSyncStructLIb
                     serialPort.Open();
                     SerialPortAdapter = new SerialPortAdapter(serialPort);
 
-                    logger.Info("Создания Modbus ASCII");
+                    logger.Info("Slave: Создания Modbus ASCII");
                     slave = ModbusSerialSlave.CreateAscii(slaveID, SerialPortAdapter);
                     slave.Transport.WriteTimeout = 1000;
                     slave.Transport.ReadTimeout = 1000;
                     
                     
-                    logger.Info("Slave подключен");
+                    logger.Info("Slave: Slave подключен");
                     slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                     slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
                     slave.DataStore.HoldingRegisters[1] = 0;
@@ -270,7 +270,7 @@ namespace ModbusSyncStructLIb
 
                 if (TypeModbus==2)
                 {
-                    logger.Info("Создания modbus TCP");
+                    logger.Info("Slave: Создания modbus TCP");
                     IPAddress address = IPAddress.Parse(IP_client);
                     
                     IPHostEntry ipEntry = Dns.GetHostEntry(Dns.GetHostName());
@@ -283,7 +283,7 @@ namespace ModbusSyncStructLIb
 
                     thread.Start();
                     slave = ModbusTcpSlave.CreateTcp(slaveID, ListenerTCP);
-                    logger.Info("Slave подключен");
+                    logger.Info("Slave: Slave подключен");
 
                     slave.DataStore = Modbus.Data.DataStoreFactory.CreateDefaultDataStore();
                     slave.DataStore.DataStoreWrittenTo += new EventHandler<DataStoreEventArgs>(Modbus_DataStoreWriteTo);
@@ -291,16 +291,15 @@ namespace ModbusSyncStructLIb
                     slave.DataStore.HoldingRegisters[1] = 0;
 
                     Task listenTask= slave.ListenAsync();
-                    logger.Info("Slave Ожидание");
+                    logger.Info("Slave: Slave Ожидание");
                 }
                 
             }
             catch(Exception ex)
             {
                 stateSlave = SlaveState.haveerror;
-                Logger log = LogManager.GetLogger("ModbusSerialSlave");
-                LogLevel level = LogLevel.Error;
-                log.Log(level, ex.Message);
+                logger.Error(ex);
+                logger.Error("Slave: Другая ошибка смотрите в файле логов");
             }
 
         }
@@ -314,15 +313,17 @@ namespace ModbusSyncStructLIb
             {
                 
                 slave.Dispose();
-                logger.Warn("Закрытие Slave");
+                logger.Warn("Slave: Закрытие Slave");
 
                 if (serialPort!=null)
                 {
+                    logger.Warn("Slave: Закрытие serialPort");
                     serialPort.Close();
                 }
                 status_bar = 0;
                 if (ListenerTCP!=null)
                 {
+                    logger.Warn("Slave: Остановка ListenerTCP");
                     ListenerTCP.Stop();
                 }
                 
@@ -335,7 +336,7 @@ namespace ModbusSyncStructLIb
             {
                 slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
 
-                logger.Warn("Пользователь отменил передачу");
+                logger.Warn("Slave: Пользователь отменил передачу");
 
                 Thread.Sleep(400);
                 slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
@@ -343,7 +344,23 @@ namespace ModbusSyncStructLIb
                 status_bar = 0;
             }
         }
-        
+
+        public void StopTransferBecauseNoConnection()
+        {
+            if (slave != null && have_trasfer == true)
+            {
+                slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
+
+                logger.Warn("Slave: Передача не возможно, потому что нет связи");
+
+                Thread.Sleep(400);
+                slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
+                have_trasfer = false;
+                status_bar = 0;
+            }
+        }
+
+
         #endregion
 
         #region getters
@@ -387,7 +404,6 @@ namespace ModbusSyncStructLIb
                                 CheckCRC16(e.Data.B[0]);
                             }
 
-
                             if (e.StartAddress==TableUsedforRegisters.diagnostik_send)
                             {
                                 slave.DataStore.HoldingRegisters[TableUsedforRegisters.diagnostik_send] = e.Data.B[0];
@@ -400,7 +416,7 @@ namespace ModbusSyncStructLIb
 
                                 if (e.Data.B[0] == SlaveState.haveusercanceltransfer&&e.StartAddress>TableUsedforRegisters.StateSlaveRegisters)
                                 {
-                                    logger.Info("Перешел в состояние " + e.Data.B[0] + " Отмена");
+                                    logger.Info("Slave: Перешел в состояние отмена передачи объекта");
                                     slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
                                     have_trasfer = false;
                                     ProcessingSingleregx(e.Data.B[0]);
@@ -429,7 +445,6 @@ namespace ModbusSyncStructLIb
                         for (int i = 0; i < e.Data.B.Count; i++)
                         {
                             tworex[i] = e.Data.B[i];
-                            //Console.Write(receive_packet_data[i] + " ");
                         }
 
                         if (slave != null)
@@ -445,7 +460,6 @@ namespace ModbusSyncStructLIb
                         {
                             if (slave.DataStore.HoldingRegisters[1]!= SlaveState.haveusercanceltransfer)
                             {
-                                //logger.Info("Пришел пакет с данными:");
                                 for (int i = 0; i < e.Data.B.Count; i++)
                                 {
                                     receive_packet_data[i] = e.Data.B[i];
@@ -459,8 +473,7 @@ namespace ModbusSyncStructLIb
                             {
                                 slave.DataStore.HoldingRegisters[TableUsedforRegisters.StateSlaveRegisters] = SlaveState.haveusercanceltransfer;
                                 Thread.Sleep(300);
-
-                                //slave.DataStore.HoldingRegisters[TableUsedforRegisters.StateSlaveRegisters] = SlaveState.have_free_time;
+                                UpdateAfteError();
                             }
 
                         }
@@ -489,9 +502,8 @@ namespace ModbusSyncStructLIb
                 if (cr16 == v)
                 {
                     slave.DataStore.HoldingRegisters[5] = StateCR.haveNotError;
-                    logger.Info("(Проверка CR16 состоялась)" + slave.DataStore.HoldingRegisters[5]);
+                    logger.Info("Slave: (Проверка CR16 состоялась)" + slave.DataStore.HoldingRegisters[5]);
                     slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                    //logger.Info("Сумма совпала " + SlaveState.have_free_time);
                 }
         }
 
@@ -515,7 +527,7 @@ namespace ModbusSyncStructLIb
             {
                 if (slave.DataStore.HoldingRegisters[1] == SlaveState.haveusercanceltransfer)
                 {
-                    logger.Info("Пользователь отменил посылку");
+                    logger.Info("Slave: Пользователь(Master) отменил посылку");
 
                     //slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
                     UpdateAfteError();
@@ -528,9 +540,8 @@ namespace ModbusSyncStructLIb
                     {
                         countDataStruct = Convert.ToInt32(date);
                         
-                        logger.Info("Получен объем данных в байт:" + countDataStruct);
+                        logger.Info("Slave: Будет получен файл с объемом данных "+ countDataStruct + "(байт):");
                         int dataushort = (countDataStruct / 2) + 1;
-                        //logger.Info("Получен объем данных в ushort:" + dataushort);
 
                         data_byte_for_processing = new byte[countDataStruct];
                         countDataStructUsshort = (countDataStruct / 2) + 1;
@@ -567,10 +578,12 @@ namespace ModbusSyncStructLIb
                         //logger.Info("Получен объем данных в байт:" + countDataStruct);
 
                         int dataushort = (countDataStruct / 2) + 1;
-                        //logger.Info("Получен объем данных в ushort:" + dataushort);
+                        
 
                         data_byte_for_processing = new byte[countDataStruct];
                         countDataStructUsshort = (countDataStruct / 2) + 1;
+                        
+                        logger.Info("Slave: Будет получен файл с объемом данных "+ countDataStruct + "(байт):");
 
                         //в случии если пакет прервался то обнуляем
                         countrecivedcount = 0;
@@ -622,7 +635,10 @@ namespace ModbusSyncStructLIb
             {
                 statusbar_value_repeat = 0;
                 logger.Error(ex);
+                logger.Error("Slave: Другая ошибка смотрите в лог файле");
                 have_trasfer = false;
+                Thread.Sleep(100);
+                UpdateAfteError();
             }
             
         }
@@ -707,7 +723,8 @@ namespace ModbusSyncStructLIb
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                logger.Error(ex);
+                logger.Error("Slave: Другая ошибка смотрите в лог файле");
             }
         }
 
@@ -728,14 +745,14 @@ namespace ModbusSyncStructLIb
 
                 metaClass = (MetaClassForStructAndtherData)formatter.Deserialize(stream);
                 
-                logger.Info("Сформирован мета-класс");
+                logger.Info("Slave: Сформирован мета-класс");
                 //После обработки статус меняется на свободный
 
                 DateTime dataNowSlave = DateTime.Now;
 
                 System.TimeSpan delatatime = dataNowSlave - metaClass.dateTime;
                 
-                SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);
+                //SignalFormedMetaClass?.Invoke(metaClass.struct_which_need_transfer);
                 
                 if (check_deltatime>=500)
                 {
@@ -764,7 +781,7 @@ namespace ModbusSyncStructLIb
                 byte[] crc16bytes = crc16.ComputeChecksumBytes(date);
 
                 cr16 = crc16.ConverToShort(crc16bytes);
-                logger.Info("Сформирована контрольная сумма");
+                logger.Info("Slave: Сформирована контрольная сумма");
                 slave.DataStore.HoldingRegisters[1] = SlaveState.havechecktotime;
                 all_get_packet = 0;
                 status_bar = 100;
@@ -775,8 +792,10 @@ namespace ModbusSyncStructLIb
             catch (Exception ex)
             {
                 have_trasfer = false;
+                
                 logger.Error(ex);
-                //have_error_for_deseration();
+                logger.Error("Slave: Ошибка при формировании объекта. Подробнее смотрите в лог файле");
+                UpdateAfteError();
             }
         }
 
@@ -802,6 +821,7 @@ namespace ModbusSyncStructLIb
                 have_trasfer = false;
                 //have_error_for_deseration();
                 logger.Error(ex);
+                logger.Error("Slave: Ошибка при деархивировании, подробнее смотрите в лог файле");
                 UpdateAfteError();
 
             }
@@ -846,7 +866,7 @@ namespace ModbusSyncStructLIb
             {
                 Thread.Sleep(300);
                 slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;
-                logger.Error("Востановление состояние");
+                logger.Error("Slave: Востановление состояние после получения ");
             }
         }
 

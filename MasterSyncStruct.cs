@@ -190,6 +190,7 @@ namespace ModbusSyncStructLIb
             catch (Exception ex)
             {
                 state_master = SlaveState.haveerror;
+                logger.Error("Master: Ошибка с данными конфигурации");
                 logger.Error(ex);
             }
 
@@ -273,7 +274,7 @@ namespace ModbusSyncStructLIb
             catch(Exception ex)
             {
                 logger.Error(ex);
-                logger.Error("Неправильные настройки, пожалуйста проверьте");
+                logger.Error("Master: Другая ошибка подробнее смотрите в лог файле");
                 state_master = SlaveState.haveerror;
 
                 state_master = SlaveState.have_free_time;
@@ -321,21 +322,22 @@ namespace ModbusSyncStructLIb
                 StopTransfer();
                 if (master != null)
                 {
-                    logger.Warn("Мастер остановлен");
+                    logger.Warn("Master:Master остановлен");
                     master.Dispose();
                    
                 }
 
                 if (serialPort!=null)
                 {
-                    logger.Warn("порт закрыт ");
+                    logger.Warn("Master: Serialport закрыт ");
                     serialPort.Close();
                 }
             }
 
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                logger.Error(ex);
+                logger.Error("Master: Другая ошибка смотрите в файле логов");
             }
         }
 
@@ -491,7 +493,7 @@ namespace ModbusSyncStructLIb
             }
             else
             {
-                logger.Warn("Слишком большой файл");
+                logger.Warn("Master:Слишком большой файл для отправки");
             }
 
          
@@ -531,11 +533,7 @@ namespace ModbusSyncStructLIb
             havetrasfer = true;
             stoptransfer_signal = false;
             state_master = 0;
-            //logger.Info("Изменения структуры и подготовка к передачи");
-            //Мастер занят
             
-            //state_master = 1;
-
             ushort coilAddress = 10;
             date = stream.ToArray();
 
@@ -565,7 +563,7 @@ namespace ModbusSyncStructLIb
                 {
                     //Отправка кол-во байт
                     SendPaketWithCountBytes(date.Length);
-                    logger.Info("Отправляется метапакет с кол-вом данных байт" + date.Length);
+                    logger.Info("Master: Отправляется метапакет с кол-вом данных байт" + date.Length);
                     //logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
                     
                     ellapledTicks = DateTime.Now.Ticks;
@@ -576,7 +574,7 @@ namespace ModbusSyncStructLIb
                     }
                     else    //в случае если пакет меньше чем ограничения
                     {
-                        logger.Trace("Передача меньше чем, содержится в пакете");
+                        logger.Trace("Master: Передача меньше чем, содержится в пакете");
                         if (master != null)
                         {
                             master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
@@ -585,7 +583,7 @@ namespace ModbusSyncStructLIb
 
                     if (stoptransfer_signal==true)
                     {
-                        logger.Info("Передача отменена");
+                        logger.Info("Master: Передача отменена");
                         //Thread.Sleep(500);
                         //stoptransfer_signal = false;
                         havetrasfer = false;
@@ -597,7 +595,7 @@ namespace ModbusSyncStructLIb
                         ellapledTicks = DateTime.Now.Ticks - ellapledTicks;
                         elapsedSpan = new TimeSpan(ellapledTicks);
 
-                        logger.Info("Передан за " + Math.Round(elapsedSpan.TotalSeconds,1) + " Сек.");
+                        logger.Info("Master: Передан за " + Math.Round(elapsedSpan.TotalSeconds,1) + " Сек.");
                         stoptransfer_signal = false;
                     }
 
@@ -608,7 +606,7 @@ namespace ModbusSyncStructLIb
                 else  //В случае если не получено данные
                 {
                     //Console.WriteLine("Пакет не может передаться, связи с тем, что Slave занят");
-                    logger.Warn("Пакет не может передаться, связи с тем, что Slave не доступен или занят");
+                    logger.Warn("Master: Пакет не может передаться, связи с тем, что Slave не доступен или занят");
                     int count_try=0;
                     RepeatTrySend(stream, count_try);
                 }
@@ -617,13 +615,10 @@ namespace ModbusSyncStructLIb
             {
                 stoptransfer_signal = true;
                 havetrasfer = false;
-                //Console.WriteLine(ex);
+
                 logger.Error("Не удалось отправить данные");
                 logger.Error(ex);
                 state_master = SlaveState.haveerror;
-                //master.Dispose();
-                //close();
-                //Open();
             }
         }
         
@@ -633,8 +628,6 @@ namespace ModbusSyncStructLIb
         private void MoreThanTransfer(ushort coilAddress,ushort[] date_modbus, int count_send_packet)
         {
             int countneedsend = (date_modbus.Length / count_send_packet) + 1;
-            
-            //logger.Info("Будет отправлено " + countneedsend + " пакетов");
 
             status_bar_temp = 100 / Convert.ToDouble(countneedsend);
 
@@ -645,7 +638,7 @@ namespace ModbusSyncStructLIb
                 //если пользователь отменил передачу
                 if (stoptransfer_signal == true)
                 {
-                    logger.Warn("Пользователь отменил передачу");
+                    logger.Warn("Master: Пользователь отменил передачу");
                     status_bar = 0;
                     SendSingleMessage(SlaveState.haveusercanceltransfer, TableUsedforRegisters.StateSlaveRegisters);
                     //SendSingleMessage(SlaveState.have_free_time, TableUsedforRegisters.StateSlaveRegisters);
@@ -656,7 +649,7 @@ namespace ModbusSyncStructLIb
 
                 if   (status_slave == SlaveState.haveusercanceltransfer)
                 {
-                    logger.Warn("Пользователь отменил передачу у Slave");
+                    logger.Warn("Master: Пользователь отменил передачу у Slave");
                     stoptransfer_signal = true;
 
                     status_bar = 0;
@@ -776,7 +769,7 @@ namespace ModbusSyncStructLIb
 
             if (status_slave == SlaveState.haveusercanceltransfer)
             {
-                logger.Warn("Пользователь отменил передачу у Slave");
+                logger.Warn("Master:Пользователь отменил передачу у Slave");
                 havetrasfer = false;
                 stoptransfer_signal = true;
                 status_bar = 0;
@@ -804,7 +797,7 @@ namespace ModbusSyncStructLIb
             //если пользователь отменил передачу
             if (stoptransfer_signal == true)
             {
-                logger.Info("Пользователь отменил передачу");
+                logger.Info("Master: Пользователь отменил передачу");
                 return;
             }
 
@@ -812,7 +805,7 @@ namespace ModbusSyncStructLIb
 
             if (status_slave == SlaveState.haveusercanceltransfer)
             {
-                logger.Warn("Пользователь отменил передачу у Slave");
+                logger.Warn("Master: Пользователь отменил передачу у Slave");
                 stoptransfer_signal = true;
                 status_bar = 0;
                 state_master = SlaveState.haveerror;
@@ -821,7 +814,7 @@ namespace ModbusSyncStructLIb
 
             if (count_try_recurs != 3)
             {
-                logger.Info("Попытка передачи " + count_try_recurs);
+                logger.Info("Master: Попытка передачи " + count_try_recurs);
                 //Мастер занят
                 state_master = 1;
 
@@ -852,43 +845,34 @@ namespace ModbusSyncStructLIb
                         //Отправка кол-во байт
                         SendPaketWithCountBytes(date.Length);
 
-                        //logger.Info("Статус свободен:");
-                        //logger.Info("Отправляем метапкет с кол-вом данных байт: " + date.Length);
-                        //logger.Info("Отправляем метапкет с кол - вом данных ushort: " + date_modbus.Length);
-
                         //если данные больше чем переданных
                         if (date_modbus.Length > count_send_packet)
                         {
                             MoreThanTransfer(coilAddress, date_modbus, count_send_packet);
 
                             state_master = 0;
-                            logger.Info("Попытка передачи " + count_try_recurs + ": Удачное");
+                            logger.Info("Master: Попытка передачи " + count_try_recurs + ": Удачное");
                             return;
                         }
                         else    //в случае если пакет меньше чем ограничения
                         {
-                            //logger.Trace("Передача меньше чем, пакет");
-                            //logger.Info("Статус свободен:");
 
-                            //SendStatusforSlave(SlaveState.havetimetransfer);
                             //Отправка кол-во байт
                             master.WriteMultipleRegisters(slaveID, coilAddress, date_modbus);
-                            logger.Info("Попытка передачи " + count_try_recurs + " Удачное");
+                            logger.Info("Master: Попытка передачи " + count_try_recurs + " Удачное");
                             return;
                         }
                         
                     }
                     else  //В случае если не получено данные
-                    {
-
-                        //Console.WriteLine("Пакет не может передаться, связи с тем, что Slave занят");
-                        logger.Warn("Пакет не может передаться, связи с тем, что Slave не доступен или занят");
+                    {                       
+                        logger.Warn("Master: Пакет не может передаться, связи с тем, что Slave не доступен или занят");
 
                         Thread.Sleep(1000);
                         
                         if (status_slave==SlaveState.haveerror)
                         {
-                            logger.Error("Передача отменена. Пакет не может передаться, связи с тем, что у Slave ошибка");
+                            logger.Error("Master: Передача отменена. Пакет не может передаться, связи с тем, что у Slave ошибка");
                         }
 
                         else
@@ -911,7 +895,7 @@ namespace ModbusSyncStructLIb
 
             if (count_try_recurs == 3)
             {
-                logger.Warn("Пакет не передался");
+                logger.Warn("Master: Передача пакета отменена");
                 return;
             }
         }
@@ -922,13 +906,12 @@ namespace ModbusSyncStructLIb
 
             if (stoptransfer_signal == true)
             {
-                //stoptransfer_signal = false;
                 return;
             }
 
             if (status_slave == SlaveState.haveusercanceltransfer)
             {
-                logger.Warn("Пользователь отменил передачу у Slave");
+                logger.Warn("Master: Пользователь отменил передачу у Slave");
                 stoptransfer_signal = true;
                 status_bar = 0;
                 state_master = SlaveState.haveerror;
@@ -937,14 +920,14 @@ namespace ModbusSyncStructLIb
 
             if (count == 3)
             {
-                logger.Error("Ошибка");
+                logger.Error("Master: Ошибка при передача. Передача отменена");
                 state_master = SlaveState.haveerror;
                 return;
             }
             else
             {
                 status_slave = SendRequestForStatusSlave();
-                logger.Info("Попытка номер " + count);
+                logger.Info("Master: Попытка номер " + count);
 
                 if (status_slave == SlaveState.have_free_time || status_slave == SlaveState.havetimetransfer)
                 {
@@ -971,7 +954,7 @@ namespace ModbusSyncStructLIb
         {
             //Отправка данных
             status_slave = SendRequestForStatusSlave();
-            logger.Info("Отправка контрольной суммы");
+            logger.Info("Master:Отправка контрольной суммы");
 
             ushort sendCR16=crc16.ConverToShort(date);
 

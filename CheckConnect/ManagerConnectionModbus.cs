@@ -111,7 +111,7 @@ namespace ModbusSyncStructLIb.CheckConnect
             Thread.Sleep(timeRecoveraftercrash);
             if (dateold== crtime)
             {
-                logger.Warn("Не отвечает Slave в течение нескольких секунд");
+                logger.Warn("Менедженр соединения: Slave не отвечает в течение нескольких секунд");
                 //Stop();
                 //Restart();
                 return;
@@ -183,13 +183,12 @@ namespace ModbusSyncStructLIb.CheckConnect
                 {
                     have_connection = false;
                     logger.Error(ex);
+                    logger.Error("Менедженр соединения: Не удалось подключиться к Slave, попытка связаться через"+ timeRecoveraftercrash);
                     Thread.Sleep(timeRecoveraftercrash);
                     Stop();
                     var sendfile = Task.Run(() => Restart());
                     
-                    //logger.Trace("Cвязь Отсутствует");
-                    
-                    //Console.WriteLine(ex);
+
                     break;
                 }
             }
@@ -210,7 +209,8 @@ namespace ModbusSyncStructLIb.CheckConnect
             }
             catch(Exception ex)
             {
-                //logger.Error(ex);
+                logger.Error(ex);
+                logger.Error("Менеджер соединения: Ошибка при создании Modbus Slave");
             }
             while (islive)
             {
