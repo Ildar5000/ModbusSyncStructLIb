@@ -351,7 +351,7 @@ namespace ModbusSyncStructLIb
             {
                 slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
 
-                logger.Warn("Slave: Передача не возможно, потому что нет связи");
+                logger.Warn("Slave: Передача не возможна. Нет связи.");
 
                 Thread.Sleep(400);
                 slave.DataStore.HoldingRegisters[1] = SlaveState.have_free_time;

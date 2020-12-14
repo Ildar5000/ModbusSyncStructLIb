@@ -563,7 +563,7 @@ namespace ModbusSyncStructLIb
                 {
                     //Отправка кол-во байт
                     SendPaketWithCountBytes(date.Length);
-                    logger.Info("Master: Отправляется метапакет с кол-вом данных байт" + date.Length);
+                    logger.Info("Master: Отправляется метапакет с кол-вом данных байт " + date.Length);
                     //logger.Info("Отправляем метапкет с кол - вом данных ushort" + date_modbus.Length);
                     
                     ellapledTicks = DateTime.Now.Ticks;
