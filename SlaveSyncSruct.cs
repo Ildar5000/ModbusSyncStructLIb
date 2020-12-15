@@ -412,7 +412,7 @@ namespace ModbusSyncStructLIb
                                 status_bar = 0;
                                 all_get_packet = 0;
 
-                                if (e.Data.B[0] == SlaveState.haveusercanceltransfer&&e.StartAddress>TableUsedforRegisters.StateSlaveRegisters)
+                                if (e.Data.B[0] == SlaveState.haveusercanceltransfer)
                                 {
                                     slave.DataStore.HoldingRegisters[1] = SlaveState.haveusercanceltransfer;
                                     have_trasfer = false;
